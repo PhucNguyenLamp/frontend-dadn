@@ -14,130 +14,57 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import "./../css/VideoListComponent.css";
 
+// LOCATIONS?
+const devices_init = [
+  { _id: "1", title: "LED #1", type: "light_device", liked: true, status: true },
+  {
+    _id: "2",
+    title: "Temperature sensor #1",
+    type: "temperature",
+    liked: false,
+    status: false,
+  },
+  { _id: "3", title: "Humidity sensor #1", type: "humidity", liked: false, status: true },
+  { _id: "4", title: "Light sensor #1", type: "light", liked: true, status: false },
+  { _id: "5", title: "Distance sensor #1", type: "distance", liked: false, status: true },
+  { _id: "6", title: "Fan #1", type: "fan_device", liked: false, status: false },
+];
+
 export default function VideoListComponent() {
-  const [selectedTab, setSelectedTab] = useState<string>("Nổi bật");
-  const [videoData, setVideoData] = useState([]);
-  const [numberOfVid, setNumberOfVid] = useState(9); // use for load more video
-  const [tagsData, setTagsData] = useState([]);
-  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [devices, setDevices] = useState(devices_init);
   const [searchQuery, setSearchQuery] = useState<string>(""); // use for search
 
-  const fetchTemplates = async () => {
-    try {
-      // Fetch tags
-      const tagsResponse = await axios.get(`/api/getAllTags`);
-      setTagsData(tagsResponse.data.data);
-      // Fetch videos based on selected tab and tags
-      const params: any = { index: numberOfVid };
-      if (selectedTags.length > 0) {
-        params.tags = selectedTags;
-      }
-
-      if (searchQuery.length > 0) {
-        params.searchQuery = searchQuery;
-      }
-
-      let videosResponse;
-
-      if (selectedTab === "Nổi bật") {
-        videosResponse = await axios.get(`/api/get9VidSortByLiked`, { params }); // get list sorted by lineNum
-      } else if (selectedTab === "Mới nhất") {
-        videosResponse = await axios.get(`/api/getNext10Vid`, { params }); // get list sorted by RealeseDate
-      }
-
-      setVideoData(videosResponse?.data.data || []);
-    } catch (error) {
-      console.error("Error fetching templates:", error);
-      setVideoData([]); // Reset video data on error
-    }
-  };
+  const fetchDevices = async () => {};
 
   // fetch video template if there was changes
   useEffect(() => {
-    fetchTemplates(); // Load video template
-  }, [selectedTab, numberOfVid, selectedTags, searchQuery]);
-
-  const handleClick = (_id: string) => {
-    if (selectedTags?.includes(_id)) {
-      setSelectedTags(selectedTags.filter((t: string) => t !== _id)); // bỏ tag khỏi danh sách
-    } else {
-      setSelectedTags([...selectedTags, _id]); // thêm tag vào danh sách
-    }
-  };
+    fetchDevices(); // Load video template
+  }, []);
 
   return (
     <>
       <Box className="video-list-container">
         <Paper className="video-list-paper">
-          <Typography variant="h5" align="center" sx={{ mb: 3 }}>
-            View All Video Template
-          </Typography>
           <SearchBar setSearchQuery={setSearchQuery} />
-          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <Tabs
-              value={selectedTab}
-              onChange={(_e, newValue) => {
-                setSelectedTab(newValue);
-                setNumberOfVid(9); // Reset index when changing tabs
-              }}
-              className="video-list-tabs"
-            >
-              <Tab value="Nổi bật" label="Nổi bật" />
-              <Tab value="Mới nhất" label="Mới nhất" />
-            </Tabs>
-
-            <Stack direction="row" spacing={1}>
-              {tagsData && tagsData.length > 0
-                ? tagsData.map((tag: { _id: string; tagName: string }) => (
-                    <Chip
-                      key={tag._id}
-                      label={tag.tagName}
-                      onClick={() => handleClick(tag._id)}
-                      variant={
-                        selectedTags?.includes(tag._id) ? "outlined" : "filled"
-                      }
-                      className="video-list-chip"
-                    />
-                  ))
-                : null}
-            </Stack>
-          </Box>
-          <Box className="video-list-grid">
-            {videoData.length > 0 ? (
-              videoData.map(
-                (data: {
-                  _id: string;
-                  title: string;
-                  url: string;
-                  tags: [string];
-                  likeNum: number;
-                  releaseDate: Date;
-                }) => (
-                  <Box className="video-list-preview" key={data._id}>
-                    <Preview key={data._id} data={data} />
-                  </Box>
-                )
-              )
-            ) : (
-              <Typography variant="h6" color="text.secondary">
-                No videos available.
-              </Typography>
-            )}
-          </Box>
           <Box
             sx={{
               display: "flex",
-              justifyContent: "center",
-              mt: 2,
+              alignItems: "center",
+              justifyContent: "space-between",
             }}
-          >
-            <Button
-              variant="contained"
-              onClick={() => setNumberOfVid(numberOfVid + 9)}
-              className="video-list-load-more-btn"
-            >
-              Load More
-            </Button>
+          ></Box>
+          <Box className="video-list-grid">
+            {devices.length > 0 ? (
+              devices.map((data) => (
+                <Box className="video-list-preview" key={data._id}>
+                  <Preview data={data} />
+                </Box>
+              ))
+            ) : (
+              <Typography variant="h6" color="text.secondary">
+                No devices available.
+              </Typography>
+            )}
           </Box>
         </Paper>
       </Box>

@@ -12,13 +12,10 @@ import {
   SelectChangeEvent,
   Button,
 } from "@mui/material";
-import EditIcon from "@mui/icons-material/Edit";
+import HomeIcon from "@mui/icons-material/Home";
 import { useNavigate } from "react-router";
 import React, { useContext, useState } from "react";
 import { ThemeContext } from "../contexts/ThemeContext"; // Import Context
-// useContext to get user info
-import { AuthContext } from "../contexts/AuthContext";
-import { jwtDecode } from "jwt-decode";
 
 export default function NavBar() {
   const [anchorElUser, setAnchorElUser] = useState<null | HTMLElement>(null);
@@ -26,12 +23,9 @@ export default function NavBar() {
   const navigate = useNavigate();
 
   const themeContext = useContext(ThemeContext);
-  const authContext = useContext(AuthContext); // Get user info
 
-  const { user, logout  } = authContext;
-  // const userPhoto = jwtDecode(localStorage.getItem("credential")).picture;
   if (!themeContext) {
-    throw new Error("NavBar must be used within a ThemeProviderWrapper");
+    throw new Error("no theme");
   }
 
   const { themeMode, toggleTheme } = themeContext;
@@ -48,10 +42,7 @@ export default function NavBar() {
     setAnchorElUser(null);
   };
 
-  const handleLogout = () => {
-    logout();
-    navigate("/login");
-  };
+
   return (
     <Box
       sx={{
@@ -81,12 +72,15 @@ export default function NavBar() {
               alignItems: "center",
             }}
           >
-            <EditIcon />
+            <HomeIcon />
             <MenuItem onClick={() => navigate("/")}>
               <Typography>Home</Typography>
             </MenuItem>
-            <MenuItem onClick={() => navigate("/about")}>
-              <Typography>About</Typography>
+            <MenuItem onClick={() => navigate("/statistics")}>
+              <Typography>Statistics</Typography>
+            </MenuItem>
+            <MenuItem onClick={() => navigate("/logs")}>
+              <Typography>Logs</Typography>
             </MenuItem>
           </Container>
 
@@ -100,50 +94,40 @@ export default function NavBar() {
               "&:hover .MuiOutlinedInput-notchedOutline": {
                 borderColor: "gray",
               },
+              height: "40px",
             }}
           >
             <MenuItem value="light">Light</MenuItem>
             <MenuItem value="dark">Dark</MenuItem>
             <MenuItem value="purple">Purple</MenuItem>
           </Select>
-          {user ? (
-            <>
-              <IconButton onClick={handleOpenUserMenu}>
-                <Avatar alt={user.username} src={user.avatar} />
-              </IconButton>
-              <Menu
-                sx={{ mt: "45px" }}
-                id="menu-appbar"
-                anchorEl={anchorElUser}
-                anchorOrigin={{
-                  vertical: "top",
-                  horizontal: "right",
-                }}
-                keepMounted
-                transformOrigin={{
-                  vertical: "top",
-                  horizontal: "right",
-                }}
-                open={Boolean(anchorElUser)}
-                onClose={handleCloseUserMenu}
-              >
-                <MenuItem onClick={() => navigate("/account")}>
-                  <Typography sx={{ textAlign: "center" }}>
-                    Trang cá nhân
-                  </Typography>
-                </MenuItem>
-                <MenuItem onClick={() => navigate("/login")}>
-                  <Typography sx={{ textAlign: "center" }}>
-                    Đăng xuất
-                  </Typography>
-                </MenuItem>
-              </Menu>
-            </>
-          ) : (
-            <Button variant="outlined" onClick={() => navigate("/login")}>
-              <Typography>Login</Typography>
-            </Button>
-          )}
+          <>
+            <IconButton onClick={handleOpenUserMenu}>
+              <Avatar alt={"user"} src={"/mila.webp"} />
+            </IconButton>
+            <Menu
+              sx={{ mt: "45px" }}
+              id="menu-appbar"
+              anchorEl={anchorElUser}
+              anchorOrigin={{
+                vertical: "top",
+                horizontal: "right",
+              }}
+              keepMounted
+              transformOrigin={{
+                vertical: "top",
+                horizontal: "right",
+              }}
+              open={Boolean(anchorElUser)}
+              onClose={handleCloseUserMenu}
+            >
+              <MenuItem onClick={() => navigate("/account")}>
+                <Typography sx={{ textAlign: "center" }}>
+                  Trang cá nhân
+                </Typography>
+              </MenuItem>
+            </Menu>
+          </>
         </Toolbar>
       </AppBar>
     </Box>

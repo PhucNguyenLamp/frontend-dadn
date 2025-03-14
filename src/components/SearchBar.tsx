@@ -28,7 +28,7 @@ export default function SearchBar({ setSearchQuery }: SearchBarProps) {
         <TextField
           fullWidth
           variant="outlined"
-          placeholder="Search videos by title or tags..."
+          placeholder="Search for lights, fans, sensor..."
           sx={{
             "& .MuiOutlinedInput-root": {
               borderRadius: "25px",

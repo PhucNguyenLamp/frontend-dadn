@@ -1,6 +1,6 @@
 import { Box } from "@mui/material";
 import VideoListComponent from "../components/VideoListComponent";
-import HomepageIntro from "../components/HomepageIntro";
+// import HomepageIntro from "../components/HomepageIntro";
 
 export default function Home() {
   return (
@@ -15,7 +15,7 @@ export default function Home() {
           overflow: "hidden",
         }}
       >
-        <HomepageIntro />
+        {/* <HomepageIntro /> */}
         <VideoListComponent />
       </Box>
     </>
