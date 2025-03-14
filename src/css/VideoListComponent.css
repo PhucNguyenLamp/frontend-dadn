@@ -1,0 +1,79 @@
+.video-list-container {
+  min-height: 100vh;
+}
+
+/* Paper (background chính) */
+.video-list-paper {
+  padding: 24px;
+  transition: box-shadow 0.3s ease-in-out;
+  border-radius: 90px;
+  opacity: 0.95;
+}
+
+.video-list-paper:hover {
+  box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+/* Tiêu đề */
+.video-list-title {
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+/* Thanh Tabs */
+.video-list-tabs .MuiTab-root {
+  transition: color 0.3s ease-in-out, transform 0.3s ease-in-out;
+}
+
+.video-list-tabs .MuiTab-root:hover {
+  color: var(--mui-primary-dark);
+  transform: scale(1.1);
+}
+
+/* Danh sách tags */
+.video-list-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+
+}
+
+.video-list-chip {
+  transition: all 0.3s ease-in-out;
+  cursor: pointer;
+}
+
+.video-list-chip:hover {
+  background-color: var(--mui-primary-light);
+  color: white;
+  transform: scale(1.1);
+}
+
+/* Danh sách video */
+.video-list-grid {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+
+
+/* Nút "Load More" */
+.video-list-load-more {
+  display: flex;
+  justify-content: center;
+  margin-top: 16px;
+}
+
+.video-list-load-more-btn {
+  background-color: var(--mui-primary-main);
+  border-radius: 8px;
+  padding: 10px 20px;
+  cursor: pointer;
+}
+
+.video-list-load-more-btn:hover {
+  background-color: var(--mui-primary-dark);
+}
