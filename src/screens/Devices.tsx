@@ -7,6 +7,11 @@ import {
   Button,
   Switch,
   Checkbox,
+  Select,
+  InputLabel,
+  MenuItem,
+  FormControl,
+  TextField,
 } from "@mui/material";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
@@ -19,8 +24,7 @@ import { TimePicker } from "@mui/x-date-pickers/TimePicker";
 
 const data_init = [
   {
-    _id: "1",
-    title: "LED #1",
+    title: "LED",
     type: "light_device",
     status: true,
     schedule: {
@@ -32,8 +36,7 @@ const data_init = [
     data: "Brightness: 75%",
   },
   {
-    _id: "2",
-    title: "Temperature sensor #1",
+    title: "Temperature & Humidity sensor",
     type: "temperature",
     status: false,
     schedule: {
@@ -45,21 +48,7 @@ const data_init = [
     data: "Temperature: 22°C",
   },
   {
-    _id: "3",
-    title: "Humidity sensor #1",
-    type: "humidity",
-    status: true,
-    schedule: {
-      from: "6:00",
-      to: "18:00",
-      type: "repeat",
-      repeat: "M,F,S",
-    },
-    data: "Humidity: 45%",
-  },
-  {
-    _id: "4",
-    title: "Light sensor #1",
+    title: "Light sensor",
     type: "light",
     status: false,
     schedule: {
@@ -71,8 +60,7 @@ const data_init = [
     data: "Light Intensity: 300 lux",
   },
   {
-    _id: "5",
-    title: "Distance sensor #1",
+    title: "Distance sensor",
     type: "distance",
     status: true,
     schedule: {
@@ -84,8 +72,7 @@ const data_init = [
     data: "Distance: 1.5m",
   },
   {
-    _id: "6",
-    title: "Fan #1",
+    title: "Fan",
     type: "fan_device",
     status: false,
     schedule: {
@@ -99,14 +86,21 @@ const data_init = [
 ];
 
 export default function Devices() {
-  const { _id } = useParams();
+  const { type } = useParams();
   const [data, setData] = useState();
-  const safe_id = _id?.replace(":", "");
+  const [fromTime, setFromTime] = useState();
+  const [toTime, setToTime] = useState();
+  const [repeat, setRepeat] = useState();
+  const [repeatOptions, setRepeatOptions] = useState([]);
+  const [condition, setCondition] = useState();
+  const [value, setValue] = useState();
+  const [automationData, setAutomationData] = useState([]);
 
   // lấy thông tin về video bằng Id từ backend
-  const getData = (_id) => {
+  const getData = (type) => {
     try {
-      const res = data_init.find((item) => item._id == _id);
+      const res = axios.get(`http://localhost:5000/${type}`);
+      // const res = data_init.find((item) => item.type == type);
       setData(res);
     } catch (error) {
       console.log(error);
@@ -114,82 +108,149 @@ export default function Devices() {
   };
 
   useEffect(() => {
-    if (safe_id) {
-      getData(safe_id);
-    }
+    getData(type);
   }, []);
   const IconComponent = data ? icons[data.type] : null;
 
   return (
     <>
       <Box
-        sx={{ display: "flex", justifyContent: "space-between", padding: 2 }}
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          padding: 2,
+          flexDirection: "column",
+          gap: 2,
+        }}
       >
-        <Box {{display: 'flex', flexDirection: 'column'}}>
-
-
-        <Typography variant='h3'>Info</Typography>
-        <Paper
-          elevation={3}
-          sx={{
-            flex: 1,
-            marginRight: 2,
-            padding: 2,
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "center",
-          }}
-          >
-          <Box sx={{ display: "flex", gap: 2 }}>
-            <Typography variant="h4" align="center">
-              {data?.title}
-            </Typography>
-            {IconComponent && <IconComponent fontSize="large" />}
-          </Box>
-          <Box
+        <Box sx={{ display: "flex", flexDirection: "column" }}>
+          <Typography variant="h3">Info</Typography>
+          <Paper
+            elevation={3}
             sx={{
+              flex: 1,
+              marginRight: 2,
+              padding: 2,
               display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
+              flexDirection: "column",
+              justifyContent: "center",
             }}
+          >
+            <Box sx={{ display: "flex", gap: 2 }}>
+              <Typography variant="h4" align="center">
+                {data?.title}
+              </Typography>
+              {IconComponent && <IconComponent fontSize="large" />}
+            </Box>
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
             >
-            <Typography variant="h6" color={data?.status ? "success" : "error"}>
-              Status: {data?.status ? "On" : "Off"}
-            </Typography>
-            <Switch
-              checked={data?.status}
-              onChange={() => setData({ ...data, status: !data?.status })}
-              //success color if on, error color if off
-              color={data?.status ? "success" : "error"}
+              <Typography
+                variant="h6"
+                color={data?.status ? "success" : "error"}
+              >
+                Status: {data?.status ? "On" : "Off"}
+              </Typography>
+              <Switch
+                checked={data?.status}
+                onChange={() => setData({ ...data, status: !data?.status })}
+                //success color if on, error color if off
+                color={data?.status ? "success" : "error"}
               />
-          </Box>
-          <Box>
-            <Typography variant="h6">{data?.data}</Typography>
-          </Box>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-            <Typography variant="h6">Schedule: </Typography>
-            <LocalizationProvider dateAdapter={AdapterDayjs}>
-              <TimePicker label="From"/>
-              <Typography variant="h6"> - </Typography>
-              <TimePicker label="To" />
-            </LocalizationProvider>
-          </Box>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-            <Typography variant="h6">Repeat:</Typography>
-            <Checkbox />
-          </Box>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <Typography variant="h6">Repeat options:</Typography>
-            {["M", "T", "W", "T", "F", "S", "Su"].map((day, index) => (
-              <Box key={index} sx={{ display: "flex", alignItems: "center" }}>
-                <Typography variant="body1">{day}</Typography>
-                <Checkbox />
-              </Box>
-            ))}
-          </Box>
-        </Paper>
-      </Box>
+            </Box>
+            <Box>
+              <Typography variant="h6">{data?.data}</Typography>
+            </Box>
+          </Paper>
+        </Box>
+        <Box sx={{ display: "flex", flexDirection: "column" }}>
+          <Typography variant="h3">Schedule</Typography>
+          <Paper
+            elevation={3}
+            sx={{
+              flex: 1,
+              marginRight: 2,
+              padding: 2,
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "center",
+            }}
+          >
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+              <Typography variant="h6">Time: </Typography>
+              <LocalizationProvider dateAdapter={AdapterDayjs}>
+                <TimePicker label="From" />
+                <Typography variant="h6"> - </Typography>
+                <TimePicker label="To" />
+              </LocalizationProvider>
+            </Box>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+              <Typography variant="h6">Repeat:</Typography>
+              <Checkbox />
+            </Box>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <Typography variant="h6">Repeat options:</Typography>
+              {["M", "T", "W", "T", "F", "S", "Su"].map((day, index) => (
+                <Box key={index} sx={{ display: "flex", alignItems: "center" }}>
+                  <Typography variant="body1">{day}</Typography>
+                  <Checkbox />
                 </Box>
+              ))}
+            </Box>
+          </Paper>
+        </Box>
+
+        <Box sx={{ display: "flex", flexDirection: "column" }}>
+          <Typography variant="h3">Automation</Typography>
+          <Paper
+            elevation={3}
+            sx={{
+              flex: 1,
+              marginRight: 2,
+              padding: 2,
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "center",
+            }}
+          >
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+              <Typography variant="h6">When </Typography>
+              <FormControl>
+                <InputLabel id="data">Data</InputLabel>
+                <Select labelId="Data" label="Data" sx={{ minWidth: 140 }}>
+                  <MenuItem value={"temperature"}>Temperature</MenuItem>
+                  <MenuItem value={"humidity"}>Humidity</MenuItem>
+                  <MenuItem value={"light"}>Light level</MenuItem>
+                  <MenuItem value={"distance"}>Distance</MenuItem>
+                </Select>
+              </FormControl>
+              <Typography variant="h6">is </Typography>
+              <FormControl>
+                <InputLabel id="condition">Condition</InputLabel>
+                <Select
+                  labelId="Condition"
+                  label="Condition"
+                  sx={{ minWidth: 110 }}
+                >
+                  <MenuItem value={"<"}>&lt;</MenuItem>
+                  <MenuItem value={">"}>&gt;</MenuItem>
+                  <MenuItem value={"="}>=</MenuItem>
+                </Select>
+              </FormControl>
+              <Typography variant="h6"> </Typography>
+              <TextField label="Value" sx={{ width: 120 }} />
+              <Typography variant="h6"> </Typography>
+              <Button variant="contained" color="primary">
+                Add
+              </Button>
+            </Box>
+          </Paper>
+        </Box>
+      </Box>
     </>
   );
 }

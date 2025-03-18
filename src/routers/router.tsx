@@ -4,8 +4,6 @@ import App from "../App";
 import Statistics from "../screens/Statistics";
 import Login from "../screens/auth/Login";
 import Account from "../screens/Account";
-import Template from "../screens/Template";
-import Admin from "../screens/admin/Admin";
 import Logs from "../screens/Logs";
 import Devices from "../screens/Devices";
 const router = createBrowserRouter([
@@ -30,9 +28,13 @@ const router = createBrowserRouter([
         element: <Logs />,
       },
       {
-        path: "/devices/:_id",
+        path: "/devices/:type",
         element: <Devices />,
       },
+      {
+        path: "/login",
+        element: <Login />,
+      }
     ],
   },
 ]);

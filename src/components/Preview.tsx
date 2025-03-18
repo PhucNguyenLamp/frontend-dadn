@@ -10,11 +10,14 @@ import {
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import { useNavigate } from "react-router-dom";
 import icons from "../utils/Icons";
+import WaterDropIcon from "@mui/icons-material/WaterDrop";
 
 export default function Preview({ data }) {
+  console.log(data.data);
   const [liked, setLiked] = useState(data.liked);
   const [hover, setHover] = useState(false);
-  const [status, setStatus] = useState(data.status);
+  const [status, setStatus] = useState(data.data.status);
+  const [sensorData, setSensorData] = useState(data.data);
   const toggleLike = () => {
     setLiked(!liked); // Toggle like state
   };
@@ -28,8 +31,8 @@ export default function Preview({ data }) {
       <Paper
         sx={{
           width: 300,
-          p: 2,
           m: 1,
+          p: 2,
           display: "flex",
           flexDirection: "column",
           gap: 1,
@@ -39,7 +42,7 @@ export default function Preview({ data }) {
         onMouseEnter={() => setHover(true)}
         onMouseLeave={() => setHover(false)}
         onClick={() => {
-          navigate(`/devices/${_id}`);
+          navigate(`/devices/${type}`);
         }}
       >
         <Box
@@ -59,10 +62,46 @@ export default function Preview({ data }) {
             {title}
           </Typography>
           <IconComponent />
+          {type === "temperature_humidity" && <WaterDropIcon />}
         </Box>
-            <Box>
-              Info: xyz
-            </Box>
+        {/* 🔹 Dynamic Sensor Data Display */}
+        {type === "temperature_humidity" && (
+          <Box sx={{ display: "flex" }}>
+            <Typography variant="h6" sx={{ color: "text.secondary" }}>
+              {sensorData?.temperature ?? "N/A"}°C 
+            </Typography>
+            <Typography variant="h6" sx={{ color: "text.secondary" }}>
+              {"/"}
+            </Typography>
+            <Typography variant="h6" sx={{ color: "text.secondary" }}>
+              {sensorData?.humidity ?? "N/A"}%
+            </Typography>
+          </Box>
+        )}
+
+        {type === "light_device" && (
+          <Typography variant="h6" sx={{ color: "text.secondary" }}>
+            {sensorData?.ledintensity ?? "N/A"} lux
+          </Typography>
+        )}
+
+        {type === "light" && (
+          <Typography variant="h6" sx={{ color: "text.secondary" }}>
+            {sensorData?.lightsensor ?? "N/A"} lux
+          </Typography>
+        )}
+
+        {type === "fan_device" && (
+          <Typography variant="h6" sx={{ color: "text.secondary" }}>
+            {sensorData?.fanspeed ?? "N/A"} rpm
+          </Typography>
+        )}
+
+        {type === "distance" && (
+          <Typography variant="h6" sx={{ color: "text.secondary" }}>
+            {sensorData?.distancesensor ?? "N/A"} cm
+          </Typography>
+        )}
 
         <Box
           sx={{
@@ -86,7 +125,12 @@ export default function Preview({ data }) {
           >
             <FavoriteIcon color={liked ? "error" : "disabled"} />
           </IconButton>
-          <Switch checked={status} onChange={(event) => setStatus(event.target.checked)} onClick={e => e.stopPropagation()}/>
+          <Switch
+            checked={status}
+            onChange={(event) => setStatus(event.target.checked)}
+            onClick={(e) => e.stopPropagation()}
+            color={status ? "success" : "error"}
+          />
         </Box>
       </Paper>
     </>

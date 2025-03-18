@@ -7,6 +7,7 @@ import {
   Paper,
   Chip,
   Stack,
+  Skeleton,
 } from "@mui/material";
 import Preview from "../components/Preview";
 import SearchBar from "./SearchBar";
@@ -14,27 +15,55 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import "./../css/VideoListComponent.css";
 
-// LOCATIONS?
-const devices_init = [
-  { _id: "1", title: "LED #1", type: "light_device", liked: true, status: true },
+let devices_init = [
   {
-    _id: "2",
-    title: "Temperature sensor #1",
-    type: "temperature",
-    liked: false,
-    status: false,
+    title: "LED",
+    type: "light_device",
+    liked: true,
   },
-  { _id: "3", title: "Humidity sensor #1", type: "humidity", liked: false, status: true },
-  { _id: "4", title: "Light sensor #1", type: "light", liked: true, status: false },
-  { _id: "5", title: "Distance sensor #1", type: "distance", liked: false, status: true },
-  { _id: "6", title: "Fan #1", type: "fan_device", liked: false, status: false },
+  {
+    title: "Temperature & humidity sensor",
+    type: "temperature_humidity",
+    liked: false,
+  },
+  {
+    title: "Light sensor",
+    type: "light",
+    liked: true,
+  },
+  {
+    title: "Distance sensor",
+    type: "distance",
+    liked: false,
+  },
+  {
+    title: "Fan",
+    type: "fan_device",
+    liked: false,
+  },
 ];
 
 export default function DeviceListComponent() {
-  const [devices, setDevices] = useState(devices_init);
-  const [searchQuery, setSearchQuery] = useState<string>(""); // use for search
+  const [devices, setDevices] = useState();
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState(""); // use for search
 
-  const fetchDevices = async () => {};
+  const fetchDevices = async () => {
+    try {
+      const res = await axios.get("http://localhost:5000");
+      const data = res.data;
+      const updatedDevices = devices_init.map((device) => ({
+        ...device,
+        data: data[device.type] || {}, // Assign entire data object or empty
+      }));
+      setDevices(updatedDevices);
+      setLoading(false);
+      console.log(updatedDevices);
+    } catch (error) {
+      console.log(error);
+      setLoading(false);
+    }
+  };
 
   // fetch video template if there was changes
   useEffect(() => {
@@ -54,12 +83,23 @@ export default function DeviceListComponent() {
             }}
           ></Box>
           <Box className="video-list-grid">
-            {devices.length > 0 ? (
-              devices.map((data) => (
-                <Box className="video-list-preview" key={data._id}>
-                  <Preview data={data} />
-                </Box>
+            {loading ? (
+              Array.from(new Array(5)).map((_, index) => (
+                <Skeleton
+                  key={index}
+                  variant="rectangular"
+                  width={210}
+                  height={118}
+                  style={{ margin: "10px" }}
+                />
               ))
+            ) : devices.length > 0 ? (
+              devices
+                .map((data) => (
+                  <Box className="video-list-preview" key={data.type}>
+                    <Preview data={data} />
+                  </Box>
+                ))
             ) : (
               <Typography variant="h6" color="text.secondary">
                 No devices available.

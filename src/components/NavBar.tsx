@@ -126,6 +126,11 @@ export default function NavBar() {
                   Trang cá nhân
                 </Typography>
               </MenuItem>
+              <MenuItem onClick={() => navigate("/login")}>
+                <Typography sx={{ textAlign: "center" }}>
+                  Đăng xuất
+                </Typography>
+              </MenuItem>
             </Menu>
           </>
         </Toolbar>

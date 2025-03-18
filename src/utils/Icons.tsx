@@ -7,8 +7,7 @@ import WindPowerIcon from "@mui/icons-material/WindPower";
 
 const icons = {
   light: Grid4x4Icon,
-  temperature: DeviceThermostatIcon,
-  humidity: WaterDropIcon,
+  temperature_humidity: DeviceThermostatIcon,
   distance: RadarIcon,
   fan_device: WindPowerIcon,
   light_device: LightIcon,
