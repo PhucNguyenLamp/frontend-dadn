@@ -125,6 +125,10 @@ export default function Devices() {
       <Box
         sx={{ display: "flex", justifyContent: "space-between", padding: 2 }}
       >
+        <Box {{display: 'flex', flexDirection: 'column'}}>
+
+
+        <Typography variant='h3'>Info</Typography>
         <Paper
           elevation={3}
           sx={{
@@ -135,7 +139,7 @@ export default function Devices() {
             flexDirection: "column",
             justifyContent: "center",
           }}
-        >
+          >
           <Box sx={{ display: "flex", gap: 2 }}>
             <Typography variant="h4" align="center">
               {data?.title}
@@ -148,7 +152,7 @@ export default function Devices() {
               justifyContent: "space-between",
               alignItems: "center",
             }}
-          >
+            >
             <Typography variant="h6" color={data?.status ? "success" : "error"}>
               Status: {data?.status ? "On" : "Off"}
             </Typography>
@@ -157,7 +161,7 @@ export default function Devices() {
               onChange={() => setData({ ...data, status: !data?.status })}
               //success color if on, error color if off
               color={data?.status ? "success" : "error"}
-            />
+              />
           </Box>
           <Box>
             <Typography variant="h6">{data?.data}</Typography>
@@ -185,6 +189,7 @@ export default function Devices() {
           </Box>
         </Paper>
       </Box>
+                </Box>
     </>
   );
 }

@@ -60,6 +60,10 @@ export default function Preview({ data }) {
           </Typography>
           <IconComponent />
         </Box>
+            <Box>
+              Info: xyz
+            </Box>
+
         <Box
           sx={{
             display: "flex",

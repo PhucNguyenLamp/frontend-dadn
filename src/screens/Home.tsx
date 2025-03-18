@@ -1,11 +1,9 @@
 import { Box } from "@mui/material";
-import VideoListComponent from "../components/VideoListComponent";
-// import HomepageIntro from "../components/HomepageIntro";
+import DeviceListComponent from "../components/DeviceListComponent";
 
 export default function Home() {
   return (
     <>
-      {/* Nội dung trang chủ */}
       <Box
         sx={{
           position: "relative",
@@ -15,8 +13,7 @@ export default function Home() {
           overflow: "hidden",
         }}
       >
-        {/* <HomepageIntro /> */}
-        <VideoListComponent />
+        <DeviceListComponent />
       </Box>
     </>
   );

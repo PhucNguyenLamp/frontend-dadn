@@ -30,7 +30,7 @@ const devices_init = [
   { _id: "6", title: "Fan #1", type: "fan_device", liked: false, status: false },
 ];
 
-export default function VideoListComponent() {
+export default function DeviceListComponent() {
   const [devices, setDevices] = useState(devices_init);
   const [searchQuery, setSearchQuery] = useState<string>(""); // use for search
 
