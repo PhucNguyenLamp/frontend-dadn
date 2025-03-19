@@ -12,6 +12,7 @@ import {
   MenuItem,
   FormControl,
   TextField,
+  Skeleton,
 } from "@mui/material";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
@@ -26,7 +27,6 @@ const data_init = [
   {
     title: "LED",
     type: "light_device",
-    status: true,
     schedule: {
       from: "6:00",
       to: "18:00",
@@ -37,8 +37,7 @@ const data_init = [
   },
   {
     title: "Temperature & Humidity sensor",
-    type: "temperature",
-    status: false,
+    type: "temperature_humidity",
     schedule: {
       from: "6:00",
       to: "18:00",
@@ -50,7 +49,6 @@ const data_init = [
   {
     title: "Light sensor",
     type: "light",
-    status: false,
     schedule: {
       from: "6:00",
       to: "18:00",
@@ -62,7 +60,6 @@ const data_init = [
   {
     title: "Distance sensor",
     type: "distance",
-    status: true,
     schedule: {
       from: "6:00",
       to: "18:00",
@@ -74,7 +71,6 @@ const data_init = [
   {
     title: "Fan",
     type: "fan_device",
-    status: false,
     schedule: {
       from: "6:00",
       to: "18:00",
@@ -95,13 +91,18 @@ export default function Devices() {
   const [condition, setCondition] = useState();
   const [value, setValue] = useState();
   const [automationData, setAutomationData] = useState([]);
-
+  const [loading, setLoading] = useState(true);
+  const [automationValue, setAutomationValue] = useState("");
   // lấy thông tin về video bằng Id từ backend
-  const getData = (type) => {
+  const getData = async (type) => {
     try {
-      const res = axios.get(`http://localhost:5000/${type}`);
-      // const res = data_init.find((item) => item.type == type);
-      setData(res);
+      const res = await axios.get(`http://localhost:5000/${type}`);
+      const { status, data, schedule, automation } = res.data;
+      const device = data_init.find((item) => item.type === type);
+      const update_device = { ...device, status, data, schedule, automation };
+      setData(update_device);
+      setLoading(false);
+      console.log(update_device);
     } catch (error) {
       console.log(error);
     }
@@ -123,133 +124,211 @@ export default function Devices() {
           gap: 2,
         }}
       >
-        <Box sx={{ display: "flex", flexDirection: "column" }}>
-          <Typography variant="h3">Info</Typography>
-          <Paper
-            elevation={3}
-            sx={{
-              flex: 1,
-              marginRight: 2,
-              padding: 2,
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "center",
-            }}
-          >
-            <Box sx={{ display: "flex", gap: 2 }}>
-              <Typography variant="h4" align="center">
-                {data?.title}
-              </Typography>
-              {IconComponent && <IconComponent fontSize="large" />}
-            </Box>
-            <Box
-              sx={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-              }}
-            >
-              <Typography
-                variant="h6"
-                color={data?.status ? "success" : "error"}
+        {loading ? (
+          <Skeleton variant="rectangular" height={"50vh"} />
+        ) : (
+          <>
+            <Box sx={{ display: "flex", flexDirection: "column" }}>
+              <Typography variant="h3">Info</Typography>
+              <Paper
+                elevation={3}
+                sx={{
+                  flex: 1,
+                  marginRight: 2,
+                  padding: 2,
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "center",
+                }}
               >
-                Status: {data?.status ? "On" : "Off"}
-              </Typography>
-              <Switch
-                checked={data?.status}
-                onChange={() => setData({ ...data, status: !data?.status })}
-                //success color if on, error color if off
-                color={data?.status ? "success" : "error"}
-              />
+                <Box sx={{ display: "flex", gap: 2 }}>
+                  <Typography variant="h4" align="center">
+                    {data.title}
+                  </Typography>
+                  {IconComponent && <IconComponent fontSize="large" />}
+                </Box>
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                  }}
+                >
+                  {data.status != null && (
+                    <>
+                      <Typography
+                        variant="h6"
+                        color={data.status ? "success" : "error"}
+                      >
+                        Status: {data.status ? "On" : "Off"}
+                      </Typography>
+                      <Switch
+                      
+                        checked={Boolean(data?.status)}
+                        onChange={() =>
+                          setData({ ...data, status: !data.status })
+                        }
+                        //success color if on, error color if off
+                        color={data.status ? "success" : "error"}
+                      />
+                    </>
+                  )}
+                </Box>
+                {/* 🔹 Dynamic Sensor Data Display */}
+                {type === "temperature_humidity" && (
+                  <Box sx={{ display: "flex" }}>
+                    <Typography variant="h6" sx={{ color: "text.secondary" }}>
+                      {data.data.temperature ?? "N/A"}°C
+                    </Typography>
+                    <Typography variant="h6" sx={{ color: "text.secondary" }}>
+                      {"/"}
+                    </Typography>
+                    <Typography variant="h6" sx={{ color: "text.secondary" }}>
+                      {data.data.humidity ?? "N/A"}%
+                    </Typography>
+                  </Box>
+                )}
+
+                {type === "light_device" && (
+                  <Typography variant="h6" sx={{ color: "text.secondary" }}>
+                    {data.data.ledintensity ?? "N/A"} lux
+                  </Typography>
+                )}
+
+                {type === "light" && (
+                  <Typography variant="h6" sx={{ color: "text.secondary" }}>
+                    {data.data.lightsensor ?? "N/A"} lux
+                  </Typography>
+                )}
+
+                {type === "fan_device" && (
+                  <Typography variant="h6" sx={{ color: "text.secondary" }}>
+                    {data.data.fanspeed ?? "N/A"} rpm
+                  </Typography>
+                )}
+
+                {type === "distance" && (
+                  <Typography variant="h6" sx={{ color: "text.secondary" }}>
+                    {data.data.distancesensor ?? "N/A"} cm
+                  </Typography>
+                )}
+              </Paper>
             </Box>
-            <Box>
-              <Typography variant="h6">{data?.data}</Typography>
-            </Box>
-          </Paper>
-        </Box>
-        <Box sx={{ display: "flex", flexDirection: "column" }}>
-          <Typography variant="h3">Schedule</Typography>
-          <Paper
-            elevation={3}
-            sx={{
-              flex: 1,
-              marginRight: 2,
-              padding: 2,
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "center",
-            }}
-          >
-            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-              <Typography variant="h6">Time: </Typography>
-              <LocalizationProvider dateAdapter={AdapterDayjs}>
-                <TimePicker label="From" />
-                <Typography variant="h6"> - </Typography>
-                <TimePicker label="To" />
-              </LocalizationProvider>
-            </Box>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-              <Typography variant="h6">Repeat:</Typography>
-              <Checkbox />
-            </Box>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              <Typography variant="h6">Repeat options:</Typography>
-              {["M", "T", "W", "T", "F", "S", "Su"].map((day, index) => (
-                <Box key={index} sx={{ display: "flex", alignItems: "center" }}>
-                  <Typography variant="body1">{day}</Typography>
+            <Box sx={{ display: "flex", flexDirection: "column" }}>
+              <Typography variant="h3">Schedule</Typography>
+              <Paper
+                elevation={3}
+                sx={{
+                  flex: 1,
+                  marginRight: 2,
+                  padding: 2,
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "center",
+                }}
+              >
+                <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                  <Typography variant="h6">Time: </Typography>
+                  <LocalizationProvider dateAdapter={AdapterDayjs}>
+                    <TimePicker label="From" />
+                    <Typography variant="h6"> - </Typography>
+                    <TimePicker label="To" />
+                  </LocalizationProvider>
+                </Box>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                  <Typography variant="h6">Repeat:</Typography>
                   <Checkbox />
                 </Box>
-              ))}
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <Typography variant="h6">Repeat options:</Typography>
+                  {["M", "T", "W", "T", "F", "S", "Su"].map((day, index) => (
+                    <Box
+                      key={index}
+                      sx={{ display: "flex", alignItems: "center" }}
+                    >
+                      <Typography variant="body1">{day}</Typography>
+                      <Checkbox />
+                    </Box>
+                  ))}
+                </Box>
+              </Paper>
             </Box>
-          </Paper>
-        </Box>
 
-        <Box sx={{ display: "flex", flexDirection: "column" }}>
-          <Typography variant="h3">Automation</Typography>
-          <Paper
-            elevation={3}
-            sx={{
-              flex: 1,
-              marginRight: 2,
-              padding: 2,
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "center",
-            }}
-          >
-            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-              <Typography variant="h6">When </Typography>
-              <FormControl>
-                <InputLabel id="data">Data</InputLabel>
-                <Select labelId="Data" label="Data" sx={{ minWidth: 140 }}>
-                  <MenuItem value={"temperature"}>Temperature</MenuItem>
-                  <MenuItem value={"humidity"}>Humidity</MenuItem>
-                  <MenuItem value={"light"}>Light level</MenuItem>
-                  <MenuItem value={"distance"}>Distance</MenuItem>
-                </Select>
-              </FormControl>
-              <Typography variant="h6">is </Typography>
-              <FormControl>
-                <InputLabel id="condition">Condition</InputLabel>
-                <Select
-                  labelId="Condition"
-                  label="Condition"
-                  sx={{ minWidth: 110 }}
-                >
-                  <MenuItem value={"<"}>&lt;</MenuItem>
-                  <MenuItem value={">"}>&gt;</MenuItem>
-                  <MenuItem value={"="}>=</MenuItem>
-                </Select>
-              </FormControl>
-              <Typography variant="h6"> </Typography>
-              <TextField label="Value" sx={{ width: 120 }} />
-              <Typography variant="h6"> </Typography>
-              <Button variant="contained" color="primary">
-                Add
-              </Button>
+            <Box sx={{ display: "flex", flexDirection: "column" }}>
+              <Typography variant="h3">Automation</Typography>
+              <Paper
+                elevation={3}
+                sx={{
+                  flex: 1,
+                  marginRight: 2,
+                  padding: 2,
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "center",
+                }}
+              >
+                <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                  <Typography variant="h6">When </Typography>
+                  <FormControl>
+                    <InputLabel id="data">Data</InputLabel>
+                    <Select labelId="Data" label="Data" sx={{ minWidth: 140 }}>
+                      <MenuItem value={"temperature"}>Temperature</MenuItem>
+                      <MenuItem value={"humidity"}>Humidity</MenuItem>
+                      <MenuItem value={"light"}>Light level</MenuItem>
+                      <MenuItem value={"distance"}>Distance</MenuItem>
+                    </Select>
+                  </FormControl>
+                  <Typography variant="h6">is </Typography>
+                  <FormControl>
+                    <InputLabel id="condition">Condition</InputLabel>
+                    <Select
+                      labelId="Condition"
+                      label="Condition"
+                      sx={{ minWidth: 110 }}
+                    >
+                      <MenuItem value={"<"}>&lt;</MenuItem>
+                      <MenuItem value={">"}>&gt;</MenuItem>
+                      <MenuItem value={"="}>=</MenuItem>
+                    </Select>
+                  </FormControl>
+                  <Typography variant="h6"> </Typography>
+                  <TextField label="Value" sx={{ width: 120 }} />
+                  <Typography variant="h6">, </Typography>
+                  <FormControl>
+                    <InputLabel id="do">Do</InputLabel>
+                    <Select
+                      labelId="Do"
+                      label="Do"
+                      sx={{ minWidth: 110 }}
+                      onChange={(e) => setAutomationValue(e.target.value)}
+                    >
+                      <MenuItem value={"turn_on"}>Turn on</MenuItem>
+                      <MenuItem value={"turn_off"}>Turn off</MenuItem>
+                      <MenuItem value={"set_value"}>Set value</MenuItem>
+                    </Select>
+                  </FormControl>
+                  <FormControl>
+                    <InputLabel id="device">Device</InputLabel>
+                    <Select
+                      labelId="Device"
+                      label="Device"
+                      sx={{ minWidth: 110 }}
+                    >
+                      <MenuItem value={"fan"}>Fan</MenuItem>
+                      <MenuItem value={"led"}>LED</MenuItem>
+                    </Select>
+                  </FormControl>
+                  {automationValue === "set_value" && (
+                    <TextField label="Value" sx={{ width: 120 }} />
+                  )}
+                  <Button variant="contained" color="primary">
+                    Add
+                  </Button>
+                </Box>
+              </Paper>
             </Box>
-          </Paper>
-        </Box>
+          </>
+        )}
       </Box>
     </>
   );

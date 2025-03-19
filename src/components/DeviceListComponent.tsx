@@ -52,15 +52,15 @@ export default function DeviceListComponent() {
     try {
       const res = await axios.get("http://localhost:5000");
       const data = res.data;
+      console.log(data)
       const updatedDevices = devices_init.map((device) => ({
         ...device,
         data: data[device.type] || {}, // Assign entire data object or empty
       }));
       setDevices(updatedDevices);
-      setLoading(false);
-      console.log(updatedDevices);
     } catch (error) {
       console.log(error);
+    } finally {
       setLoading(false);
     }
   };
@@ -93,17 +93,13 @@ export default function DeviceListComponent() {
                   style={{ margin: "10px" }}
                 />
               ))
-            ) : devices.length > 0 ? (
+            ) : (
               devices
                 .map((data) => (
                   <Box className="video-list-preview" key={data.type}>
                     <Preview data={data} />
                   </Box>
                 ))
-            ) : (
-              <Typography variant="h6" color="text.secondary">
-                No devices available.
-              </Typography>
             )}
           </Box>
         </Paper>

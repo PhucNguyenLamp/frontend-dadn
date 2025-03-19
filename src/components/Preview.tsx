@@ -13,7 +13,6 @@ import icons from "../utils/Icons";
 import WaterDropIcon from "@mui/icons-material/WaterDrop";
 
 export default function Preview({ data }) {
-  console.log(data.data);
   const [liked, setLiked] = useState(data.liked);
   const [hover, setHover] = useState(false);
   const [status, setStatus] = useState(data.data.status);
@@ -21,7 +20,6 @@ export default function Preview({ data }) {
   const toggleLike = () => {
     setLiked(!liked); // Toggle like state
   };
-
   //define the vid model
   const { _id, title, type } = data;
   const IconComponent = icons[type];
@@ -68,38 +66,38 @@ export default function Preview({ data }) {
         {type === "temperature_humidity" && (
           <Box sx={{ display: "flex" }}>
             <Typography variant="h6" sx={{ color: "text.secondary" }}>
-              {sensorData?.temperature ?? "N/A"}°C 
+              {sensorData.temperature ?? "N/A"}°C
             </Typography>
             <Typography variant="h6" sx={{ color: "text.secondary" }}>
               {"/"}
             </Typography>
             <Typography variant="h6" sx={{ color: "text.secondary" }}>
-              {sensorData?.humidity ?? "N/A"}%
+              {sensorData.humidity ?? "N/A"}%
             </Typography>
           </Box>
         )}
 
         {type === "light_device" && (
           <Typography variant="h6" sx={{ color: "text.secondary" }}>
-            {sensorData?.ledintensity ?? "N/A"} lux
+            {sensorData.ledcolor ?? "N/A"}
           </Typography>
         )}
 
         {type === "light" && (
           <Typography variant="h6" sx={{ color: "text.secondary" }}>
-            {sensorData?.lightsensor ?? "N/A"} lux
+            {sensorData.lightsensor ?? "N/A"} lux
           </Typography>
         )}
 
         {type === "fan_device" && (
           <Typography variant="h6" sx={{ color: "text.secondary" }}>
-            {sensorData?.fanspeed ?? "N/A"} rpm
+            {sensorData.fanspeed ?? "N/A"} rpm
           </Typography>
         )}
 
         {type === "distance" && (
           <Typography variant="h6" sx={{ color: "text.secondary" }}>
-            {sensorData?.distancesensor ?? "N/A"} cm
+            {sensorData.distancesensor ?? "N/A"} cm
           </Typography>
         )}
 
@@ -125,12 +123,15 @@ export default function Preview({ data }) {
           >
             <FavoriteIcon color={liked ? "error" : "disabled"} />
           </IconButton>
-          <Switch
-            checked={status}
-            onChange={(event) => setStatus(event.target.checked)}
-            onClick={(e) => e.stopPropagation()}
-            color={status ? "success" : "error"}
-          />
+          {/*  if status not null */}
+          {status != null && (
+            <Switch
+              checked={Boolean(status)}
+              onChange={(event) => setStatus(event.target.checked)}
+              onClick={(e) => e.stopPropagation()}
+              color={status ? "success" : "error"}
+            />
+          )}
         </Box>
       </Paper>
     </>
