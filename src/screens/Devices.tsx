@@ -13,6 +13,7 @@ import {
   FormControl,
   TextField,
   Skeleton,
+  Slider,
 } from "@mui/material";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
@@ -98,11 +99,11 @@ export default function Devices() {
     try {
       const res = await axios.get(`http://localhost:5000/${type}`);
       const { status, data, schedule, automation } = res.data;
+      console.log(data);
       const device = data_init.find((item) => item.type === type);
       const update_device = { ...device, status, data, schedule, automation };
       setData(update_device);
       setLoading(false);
-      console.log(update_device);
     } catch (error) {
       console.log(error);
     }
@@ -163,7 +164,6 @@ export default function Devices() {
                         Status: {data.status ? "On" : "Off"}
                       </Typography>
                       <Switch
-                      
                         checked={Boolean(data?.status)}
                         onChange={() =>
                           setData({ ...data, status: !data.status })
@@ -190,9 +190,22 @@ export default function Devices() {
                 )}
 
                 {type === "light_device" && (
-                  <Typography variant="h6" sx={{ color: "text.secondary" }}>
-                    {data.data.ledintensity ?? "N/A"} lux
-                  </Typography>
+                  <>
+                    <Typography variant="h6" sx={{ color: "text.secondary" }}>
+                      LED Color:
+                    </Typography>
+                    <TextField
+                      type="color"
+                      value={data.data.ledcolor ?? "#000000"}
+                      onChange={(e) =>
+                        setData({
+                          ...data,
+                          data: { ...data.data, ledcolor: e.target.value },
+                        })
+                      }
+                      sx={{ width: 100 }}
+                    />
+                  </>
                 )}
 
                 {type === "light" && (
@@ -202,9 +215,19 @@ export default function Devices() {
                 )}
 
                 {type === "fan_device" && (
-                  <Typography variant="h6" sx={{ color: "text.secondary" }}>
-                    {data.data.fanspeed ?? "N/A"} rpm
-                  </Typography>
+                  <>
+                    <Typography variant="h6" sx={{ color: "text.secondary" }}>
+                      {data.data.fanspeed ?? "N/A"} RPM
+                    </Typography>
+                    <Slider
+                      onChange={(e, newvalue) => {
+                        setData({ ...data, data: { fanspeed: newvalue } });
+                      }}
+                      value={data.data.fanspeed}
+                      aria-label="Fan speed slider"
+                      sx={{ width: 200 }}
+                    />
+                  </>
                 )}
 
                 {type === "distance" && (
