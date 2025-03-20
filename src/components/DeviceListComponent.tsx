@@ -46,13 +46,15 @@ let devices_init = [
 export default function DeviceListComponent() {
   const [devices, setDevices] = useState();
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState(""); // use for search
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedTab, setSelectedTab] = useState("device");
+  // device or sensor
 
   const fetchDevices = async () => {
     try {
       const res = await axios.get("http://localhost:5000");
       const data = res.data;
-      console.log(data)
+      console.log(data);
       const updatedDevices = devices_init.map((device) => ({
         ...device,
         data: data[device.type] || {}, // Assign entire data object or empty
@@ -75,6 +77,16 @@ export default function DeviceListComponent() {
       <Box className="video-list-container">
         <Paper className="video-list-paper">
           <SearchBar setSearchQuery={setSearchQuery} />
+          <Tabs
+            value={selectedTab}
+            onChange={(_e, newValue) => {
+              setSelectedTab(newValue);
+            }}
+            className="video-list-tabs"
+          >
+            <Tab value="device" label="Devices" />
+            <Tab value="sensor" label="Sensors" />
+          </Tabs>
           <Box
             sx={{
               display: "flex",
@@ -83,24 +95,41 @@ export default function DeviceListComponent() {
             }}
           ></Box>
           <Box className="video-list-grid">
-            {loading ? (
-              Array.from(new Array(5)).map((_, index) => (
-                <Skeleton
-                  key={index}
-                  variant="rectangular"
-                  width={210}
-                  height={118}
-                  style={{ margin: "10px" }}
-                />
-              ))
-            ) : (
-              devices
-                .map((data) => (
-                  <Box className="video-list-preview" key={data.type}>
-                    <Preview data={data} />
-                  </Box>
+            {loading
+              ? Array.from(new Array(5)).map((_, index) => (
+                  <Skeleton
+                    key={index}
+                    variant="rectangular"
+                    width={210}
+                    height={118}
+                    style={{ margin: "10px" }}
+                  />
                 ))
-            )}
+              : // filter based on tab
+                // if tab is device, filter fan_device light_device
+                // if tab is sensor, filter light temperature_humidity distance
+                devices
+                  .filter((data) =>
+                    selectedTab === "device"
+                      ? ["fan_device", "light_device"].includes(data.type)
+                      : selectedTab === "sensor"
+                      ? ["light", "temperature_humidity", "distance"].includes(
+                          data.type
+                        )
+                      : false
+                  )
+                  .filter((data) =>
+                    searchQuery.trim() === ""
+                      ? true
+                      : data.title
+                          .toLowerCase()
+                          .includes(searchQuery.toLowerCase())
+                  )
+                  .map((data) => (
+                    <Box className="video-list-preview" key={data.type}>
+                      <Preview data={data} />
+                    </Box>
+                  ))}
           </Box>
         </Paper>
       </Box>
