@@ -1,5 +1,4 @@
 import {
-  Paper,
   Typography,
   Box,
   Container,
@@ -31,11 +30,9 @@ export default function Account() {
                 >
                   {/* <LockIcon /> */}
       </Avatar>
-      <Paper>
       <Typography variant="h2">ACCOUNT</Typography>
       <Typography variant="h4">Name: {user?.username}</Typography>
       <Typography variant="h4">Email: {user?.email}</Typography>
-      </Paper>
       </Container>
     </Box>
   );
