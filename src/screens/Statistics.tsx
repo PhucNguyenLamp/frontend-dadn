@@ -35,7 +35,7 @@ export default function Statistics() {
         <Skeleton variant="rectangular" width="100%" height={400} />
       ) : (
         <Container>
-          <Typography variant="h3" sx={{color: "white"}}>STATISTICS</Typography>
+          <Typography variant="h3" sx={{color: "white"}}>ROOM STATISTICS</Typography>
         <Paper
           sx={{
             padding: 2,
