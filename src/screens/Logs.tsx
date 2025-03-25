@@ -51,7 +51,7 @@ export default function Logs() {
   return (
     <Accordion>
       <AccordionSummary>
-        <Typography variant="h3">LOGS</Typography>
+        <Typography variant="h3">DEVICE LOGS</Typography>
       </AccordionSummary>
       <AccordionDetails>
         <Paper sx={{ padding: 2, width: '100%' }}>
