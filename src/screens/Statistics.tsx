@@ -1,4 +1,4 @@
-import { Typography, Box, Paper, Skeleton } from "@mui/material";
+import { Typography, Box, Paper, Skeleton, Container } from "@mui/material";
 import { LineChart, lineElementClasses } from "@mui/x-charts/LineChart";
 import axios from "axios";
 import { useEffect, useState } from "react";
@@ -34,6 +34,8 @@ export default function Statistics() {
       {loading ? (
         <Skeleton variant="rectangular" width="100%" height={400} />
       ) : (
+        <Container>
+          <Typography variant="h3" sx={{color: "white"}}>STATISTICS</Typography>
         <Paper
           sx={{
             padding: 2,
@@ -132,6 +134,7 @@ export default function Statistics() {
             />
           </Box>
         </Paper>
+        </Container>
       )}
     </>
   );

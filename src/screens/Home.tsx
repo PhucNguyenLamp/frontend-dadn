@@ -1,4 +1,4 @@
-import { Box } from "@mui/material";
+import { Box, Typography } from "@mui/material";
 import DeviceListComponent from "../components/DeviceListComponent";
 
 export default function Home() {
@@ -13,6 +13,7 @@ export default function Home() {
           overflow: "hidden",
         }}
       >
+        <Typography variant="h3" sx={{align: "center"}}>Welcome to Smart Office Room</Typography>
         <DeviceListComponent />
       </Box>
     </>

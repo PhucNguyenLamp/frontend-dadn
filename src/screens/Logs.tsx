@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Paper, Skeleton } from "@mui/material";
+import { Paper, Skeleton, Accordion, AccordionSummary, AccordionDetails, Typography } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import axios from "axios";
 
@@ -49,21 +49,28 @@ export default function Logs() {
   }, []);
 
   return (
-    <Paper sx={{ padding: 2 }}>
-      {loading ? (
-        <Skeleton variant="rectangular" width="100%" height={400} />
-      ) : (
-        <DataGrid
-          rows={logs}
-          columns={columns}
-          initialState={{
-            pagination: { paginationModel: { page: 0, pageSize: 10 } },
-            sorting: { sortModel: [{ field: "timestamp", sort: "desc" }] },
-          }}
-          pageSizeOptions={[5, 10]}
-          sx={{ border: 0 }}
-        />
-      )}
-    </Paper>
+    <Accordion>
+      <AccordionSummary>
+        <Typography variant="h3">LOGS</Typography>
+      </AccordionSummary>
+      <AccordionDetails>
+        <Paper sx={{ padding: 2, width: '100%' }}>
+          {loading ? (
+            <Skeleton variant="rectangular" width="100%" height={400} />
+          ) : (
+            <DataGrid
+              rows={logs}
+              columns={columns}
+              initialState={{
+                pagination: { paginationModel: { page: 0, pageSize: 10 } },
+                sorting: { sortModel: [{ field: "timestamp", sort: "desc" }] },
+              }}
+              pageSizeOptions={[5, 10]}
+              sx={{ border: 0 }}
+            />
+          )}
+        </Paper>
+      </AccordionDetails>
+    </Accordion>
   );
 }
