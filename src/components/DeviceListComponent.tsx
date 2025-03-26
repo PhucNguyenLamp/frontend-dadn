@@ -107,7 +107,8 @@ export default function DeviceListComponent() {
                 ))
               : // filter based on tab
                 // if tab is device, filter fan_device light_device
-                // if tab is sensor, filter light temperature_humidity distance
+                // if tab is sensor, filter light temperature_humidity distance\
+                devices ? 
                 devices
                   .filter((data) =>
                     selectedTab === "device"
@@ -129,7 +130,9 @@ export default function DeviceListComponent() {
                     <Box className="video-list-preview" key={data.type}>
                       <Preview data={data} />
                     </Box>
-                  ))}
+                  ))
+                : <Typography>No devices found</Typography>
+                }
           </Box>
         </Paper>
       </Box>
