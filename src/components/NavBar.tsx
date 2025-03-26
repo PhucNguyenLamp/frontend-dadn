@@ -16,13 +16,20 @@ import HomeIcon from "@mui/icons-material/Home";
 import { useNavigate } from "react-router";
 import React, { useContext, useState } from "react";
 import { ThemeContext } from "../contexts/ThemeContext"; // Import Context
+import { AuthContext } from "../contexts/AuthContext";
 
 export default function NavBar() {
   const [anchorElUser, setAnchorElUser] = useState<null | HTMLElement>(null);
-  // const [user, setUser] = useState(null);
   const navigate = useNavigate();
 
   const themeContext = useContext(ThemeContext);
+  const authContext = useContext(AuthContext);
+  const logout = authContext!.logout;
+
+  const handleLogout = () => {
+    logout();
+    // navigate("/login");
+  }
 
   if (!themeContext) {
     throw new Error("no theme");
@@ -103,7 +110,7 @@ export default function NavBar() {
           </Select>
           <>
             <IconButton onClick={handleOpenUserMenu}>
-              <Avatar alt={"user"} src={"/mila.webp"} />
+              <Avatar alt={"user"} />
             </IconButton>
             <Menu
               sx={{ mt: "45px" }}
@@ -126,11 +133,12 @@ export default function NavBar() {
                   Trang cá nhân
                 </Typography>
               </MenuItem>
-              <MenuItem onClick={() => navigate("/login")}>
-                <Typography sx={{ textAlign: "center" }}>
-                  Đăng xuất
-                </Typography>
-              </MenuItem>
+
+                <MenuItem onClick={handleLogout}>
+                  <Typography sx={{ textAlign: "center" }}>
+                    Đăng xuất
+                  </Typography>
+                </MenuItem>
             </Menu>
           </>
         </Toolbar>

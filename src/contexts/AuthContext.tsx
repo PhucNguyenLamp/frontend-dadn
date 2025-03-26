@@ -1,43 +1,40 @@
 import { createContext, useState, useEffect } from "react";
-import api from "../api/axios";
-import { useGoogleLogin } from "@react-oauth/google";
-export const AuthContext = createContext(null);
+
+interface AuthContextType {
+  user: string | null;
+  token: string | null;
+  logout: () => void;
+}
+
+export const AuthContext = createContext<AuthContextType | null>(null);
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null); // {}
+  const [user, setUser] = useState<string | null>(null);
+  const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   useEffect(() => {
-    const credential = localStorage.getItem("credential");
-    if (credential) {
-      api
-        .post(
-          "/auth/google/token",
-          { credential },
-          { headers: { "Content-Type": "application/json" } }
-        )
-        .then((res) => {
-          setUser(res.data.user);
-          console.log(res.data.user);
-        })
-        .catch(() => {
-          localStorage.removeItem("credential");
-          setUser(null);
-        })
-        .finally(() => setLoading(false));
-    } else {
-      setLoading(false);
+    const storedToken = localStorage.getItem("token");
+    const storedUser = localStorage.getItem("user");
+    if (storedToken && storedUser) {
+      setToken(storedToken);
+      setUser(storedUser);
     }
+    setLoading(false);
   }, []);
 
   const logout = () => {
-    localStorage.removeItem("credential");
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    setToken(null);
     setUser(null);
   };
   return (
     <AuthContext.Provider
       value={{
         user,
-        logout,
+        token,
         loading,
+        setUser,
+        logout,
       }}
     >
       {children}

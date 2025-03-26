@@ -4,11 +4,11 @@ import { AuthContext } from "../contexts/AuthContext";
 
 export default function Account() {
   const { user } = useContext(AuthContext);
+  console.log(user);
   return (
     <Paper>
       <Typography variant="h3">Account</Typography>
-      <Typography variant="h4">Name: {user?.username}</Typography>
-      <Typography variant="h4">Email: {user?.email}</Typography>
+      <Typography variant="h4">Name: {user}</Typography>
     </Paper>
   );
 }
