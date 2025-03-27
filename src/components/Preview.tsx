@@ -17,6 +17,12 @@ export default function Preview({ data }) {
   const [hover, setHover] = useState(false);
   const [status, setStatus] = useState(data.data.status);
   const [sensorData, setSensorData] = useState(data.data);
+
+  useEffect(() => {
+    setLiked(data.liked);
+    setStatus(data.data.status);
+    setSensorData(data.data);
+  }, [data]);
   const toggleLike = () => {
     setLiked(!liked); // Toggle like state
   };
@@ -126,8 +132,8 @@ export default function Preview({ data }) {
           {/*  if status not null */}
           {status != null && (
             <Switch
-              checked={Boolean(status)}
-              onChange={(event) => setStatus(event.target.checked)}
+              checked={Boolean(status === "ON")}
+              onChange={(event) => setStatus(status === "ON" ? "OFF" : "ON")}
               onClick={(e) => e.stopPropagation()}
               color={status ? "success" : "error"}
             />

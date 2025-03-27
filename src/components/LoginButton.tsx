@@ -9,15 +9,12 @@ export default function LoginButton() {
   const navigate = useNavigate();
   const handleSuccess = async (tokenResponse) => {
     const { credential } = tokenResponse;
-    // console.log(token)
-    // body: {token: token}
     await api.post(
       "/auth/google/token",
       { credential },
       { headers: { "Content-Type": "application/json" } }
     );
     localStorage.setItem("credential", credential);
-    console.log(localStorage.getItem("credential"));
     navigate("/");
   }
 

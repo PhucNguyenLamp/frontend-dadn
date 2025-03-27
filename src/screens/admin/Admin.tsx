@@ -26,7 +26,6 @@ export default function Admin() {
   }
   const handleGetAll = () => {
     api.get("/getall").then((res) => {
-      console.log(res.data);
       setImage(res.data.thumbnail);
 
     }).catch((err) => {

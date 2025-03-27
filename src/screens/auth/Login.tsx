@@ -35,7 +35,6 @@ export default function Login() {
   const navigate = useNavigate();
 
   const { user, setUser } = useContext(AuthContext);
-  console.log(user);
   useEffect(() => {
     if (user) {
       navigate("/");

@@ -14,7 +14,6 @@ export default function Statistics() {
     try {
       const res = await axios.get("http://localhost:5000/statistics");
       const data = res.data;
-      console.log(data);
       setTemperature(data.temperature_value_time);
       setHumidity(data.humidity_value_time);
       setLightIntensity(data.light_value_time);

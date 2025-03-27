@@ -99,7 +99,7 @@ export default function Devices() {
     try {
       const res = await axios.get(`http://localhost:5000/${type}`);
       const { status, data, schedule, automation } = res.data;
-      console.log(data);
+      
       const device = data_init.find((item) => item.type === type);
       const update_device = { ...device, status, data, schedule, automation };
       setData(update_device);
@@ -111,6 +111,10 @@ export default function Devices() {
 
   useEffect(() => {
     getData(type);
+    setInterval(() => {
+      getData(type);
+    }
+    , 5000);
   }, []);
   const IconComponent = data ? icons[data.type] : null;
 
@@ -159,17 +163,20 @@ export default function Devices() {
                     <>
                       <Typography
                         variant="h6"
-                        color={data.status ? "success" : "error"}
+                        color={data.status === "ON" ? "success" : "error"}
                       >
-                        Status: {data.status ? "On" : "Off"}
+                        Status: {data.status === "ON" ? "On" : "Off"}
                       </Typography>
                       <Switch
-                        checked={Boolean(data?.status)}
+                        checked={Boolean(data?.status === "ON")}
                         onChange={() =>
-                          setData({ ...data, status: !data.status })
+                          setData({
+                            ...data,
+                            status: data.status === "ON" ? "OFF" : "ON",
+                          })
                         }
                         //success color if on, error color if off
-                        color={data.status ? "success" : "error"}
+                        color={data.status === "ON" ? "success" : "error"}
                       />
                     </>
                   )}
