@@ -115,21 +115,6 @@ export default function Statistics() {
               colors={["#CFB53B"]}
             />
           </Box>
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-            <Typography variant="h5">Distance Sensor (cm)</Typography>
-            <LineChart
-              xAxis={[{ data: [0, 2, 4, 6, 8, 10] }]}
-              series={[
-                {
-                  data: [60, 65, 63, 70, 68, 64],
-                  area: true,
-                },
-              ]}
-              width={500}
-              height={300}
-              colors={["lightgray"]}
-            />
-          </Box>
         </Paper>
       )}
     </>

@@ -31,11 +31,7 @@ let devices_init = [
     type: "light",
     liked: true,
   },
-  {
-    title: "Distance sensor",
-    type: "distance",
-    liked: false,
-  },
+
   {
     title: "Fan",
     type: "fan_device",

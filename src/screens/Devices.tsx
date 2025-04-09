@@ -23,99 +23,155 @@ import { DemoContainer } from "@mui/x-date-pickers/internals/demo";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { TimePicker } from "@mui/x-date-pickers/TimePicker";
+import dayjs from "dayjs";
 
 const data_init = [
   {
     title: "LED",
     type: "light_device",
-    schedule: {
-      from: "6:00",
-      to: "18:00",
-      type: "repeat",
-      repeat: "everyday",
-    },
-    data: "Brightness: 75%",
   },
   {
     title: "Temperature & Humidity sensor",
     type: "temperature_humidity",
-    schedule: {
-      from: "6:00",
-      to: "18:00",
-      type: "once",
-      repeat: "none",
-    },
-    data: "Temperature: 22°C",
   },
   {
     title: "Light sensor",
     type: "light",
-    schedule: {
-      from: "6:00",
-      to: "18:00",
-      type: "once",
-      repeat: "M",
-    },
-    data: "Light Intensity: 300 lux",
-  },
-  {
-    title: "Distance sensor",
-    type: "distance",
-    schedule: {
-      from: "6:00",
-      to: "18:00",
-      type: "repeat",
-      repeat: "everyday",
-    },
-    data: "Distance: 1.5m",
   },
   {
     title: "Fan",
     type: "fan_device",
-    schedule: {
-      from: "6:00",
-      to: "18:00",
-      type: "once",
-      repeat: "27/03/2025",
-    },
-    data: "Speed: 1200 RPM",
   },
 ];
-
+const device_map = {
+  fan_device: "FAN_1",
+  light_device: "LED_1",
+};
 export default function Devices() {
   const { type } = useParams();
-  const [data, setData] = useState();
-  const [fromTime, setFromTime] = useState();
-  const [toTime, setToTime] = useState();
-  const [repeat, setRepeat] = useState();
-  const [repeatOptions, setRepeatOptions] = useState([]);
-  const [condition, setCondition] = useState();
-  const [value, setValue] = useState();
+  const [data, setData] = useState({});
+  // schedule
+  const [time, setTime] = useState();
+  const [repeat, setRepeat] = useState(false);
+  const [repeatOptions, setRepeatOptions] = useState([
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+  ]);
+  const [selectedAction, setSelectedAction] = useState("");
+  const [actionValue, setActionValue] = useState(null);
+
+  // automation
   const [automationData, setAutomationData] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [automationCondition, setAutomationCondition] = useState("");
   const [automationValue, setAutomationValue] = useState("");
-  // lấy thông tin về video bằng Id từ backend
+  const [automationDo, setAutomationDo] = useState("");
+  const [automationDevice, setAutomationDevice] = useState("");
+  const [automationDeviceValue, setAutomationDeviceValue] = useState(null);
+
+  // update helper
+  const [update, setUpdate] = useState(false);
+  // loading state
+  const [loading, setLoading] = useState(true);
+
   const getData = async (type) => {
     try {
       const res = await axios.get(`http://localhost:5000/${type}`);
       const { status, data, schedule, automation } = res.data;
-      
+
       const device = data_init.find((item) => item.type === type);
       const update_device = { ...device, status, data, schedule, automation };
       setData(update_device);
+      console.log(update_device);
+      // Extract schedule data and update state
+      setTime(dayjs(update_device.schedule.time));
+      setRepeat(update_device.schedule.repeat || false);
+      setRepeatOptions(
+        update_device.schedule.repeatOptions || [
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+        ]
+      );
+      setSelectedAction(update_device.schedule.selectedAction || "");
+      setActionValue(update_device.schedule.actionValue || null);
+
       setLoading(false);
     } catch (error) {
       console.log(error);
     }
   };
 
+  const updateData = async () => {
+    try {
+      const res = await axios.post(`http://localhost:5000/device_status`, {
+        _id: device_map[type],
+        status: data.status,
+        data: data.data.fanspeed ? data.data.fanspeed : data.data.ledcolor,
+      });
+      console.log(res.data);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const updateSchedule = async () => {
+    try {
+      const schedule = {
+        _id: device_map[type],
+        schedule: {
+          time,
+          repeat,
+          repeatOptions,
+          selectedAction,
+          actionValue,
+        },
+      };
+      const res = await axios.post(`http://localhost:5000/schedule`, schedule);
+      console.log(res.data);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const updateAutomation = async () => {
+    try {
+      const automation = {
+        _id: device_map[type],
+        automation: {
+          data: automationData,
+          condition: automationCondition,
+          value: automationValue,
+          do: automationDo,
+          device: automationDevice,
+          deviceValue: automationDeviceValue,
+        },
+      };
+      const res = await axios.post(`http://localhost:5000/automation`, automation);
+      console.log(res.data);
+    } catch (error) {
+      console.log(error);
+    }
+  }
   useEffect(() => {
     getData(type);
     setInterval(() => {
       getData(type);
-    }
-    , 5000);
+    }, 5000);
   }, []);
+
+  useEffect(() => {
+    updateData();
+  }, [update]);
+
   const IconComponent = data ? icons[data.type] : null;
 
   return (
@@ -169,12 +225,13 @@ export default function Devices() {
                       </Typography>
                       <Switch
                         checked={Boolean(data?.status === "ON")}
-                        onChange={() =>
+                        onChange={() => {
                           setData({
                             ...data,
                             status: data.status === "ON" ? "OFF" : "ON",
-                          })
-                        }
+                          });
+                          setUpdate(!update);
+                        }}
                         //success color if on, error color if off
                         color={data.status === "ON" ? "success" : "error"}
                       />
@@ -204,12 +261,13 @@ export default function Devices() {
                     <TextField
                       type="color"
                       value={data.data.ledcolor ?? "#000000"}
-                      onChange={(e) =>
+                      onChange={(e) => {
                         setData({
                           ...data,
                           data: { ...data.data, ledcolor: e.target.value },
-                        })
-                      }
+                        });
+                        setUpdate(!update);
+                      }}
                       sx={{ width: 100 }}
                     />
                   </>
@@ -229,6 +287,7 @@ export default function Devices() {
                     <Slider
                       onChange={(e, newvalue) => {
                         setData({ ...data, data: { fanspeed: newvalue } });
+                        updateData();
                       }}
                       value={data.data.fanspeed}
                       aria-label="Fan speed slider"
@@ -236,127 +295,223 @@ export default function Devices() {
                     />
                   </>
                 )}
-
-                {type === "distance" && (
-                  <Typography variant="h6" sx={{ color: "text.secondary" }}>
-                    {data.data.distancesensor ?? "N/A"} cm
-                  </Typography>
-                )}
               </Paper>
             </Box>
-            <Box sx={{ display: "flex", flexDirection: "column" }}>
-              <Typography variant="h3">Schedule</Typography>
-              <Paper
-                elevation={3}
-                sx={{
-                  flex: 1,
-                  marginRight: 2,
-                  padding: 2,
-                  display: "flex",
-                  flexDirection: "column",
-                  justifyContent: "center",
-                }}
-              >
-                <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                  <Typography variant="h6">Time: </Typography>
-                  <LocalizationProvider dateAdapter={AdapterDayjs}>
-                    <TimePicker label="From" />
-                    <Typography variant="h6"> - </Typography>
-                    <TimePicker label="To" />
-                  </LocalizationProvider>
-                </Box>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                  <Typography variant="h6">Repeat:</Typography>
-                  <Checkbox />
-                </Box>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                  <Typography variant="h6">Repeat options:</Typography>
-                  {["M", "T", "W", "T", "F", "S", "Su"].map((day, index) => (
-                    <Box
-                      key={index}
-                      sx={{ display: "flex", alignItems: "center" }}
-                    >
-                      <Typography variant="body1">{day}</Typography>
-                      <Checkbox />
+            {type === "light_device" || type === "fan_device" ? (
+              <>
+                <Box sx={{ display: "flex", flexDirection: "column" }}>
+                  <Typography variant="h3">Schedule</Typography>
+                  <Paper
+                    elevation={3}
+                    sx={{
+                      flex: 1,
+                      marginRight: 2,
+                      padding: 2,
+                      display: "flex",
+                      flexDirection: "column",
+                      justifyContent: "center",
+                    }}
+                  >
+                    {/* map devices added schedule here */}
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                      <Typography variant="h6">Time: </Typography>
+                      <LocalizationProvider dateAdapter={AdapterDayjs}>
+                        <TimePicker
+                          label="At"
+                          value={time}
+                          onChange={(newValue) => setTime(newValue)}
+                        />
+                      </LocalizationProvider>
                     </Box>
-                  ))}
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                      <Typography variant="h6">Repeat:</Typography>
+                      <Checkbox
+                        checked={repeat}
+                        onChange={(e) => setRepeat(e.target.checked)}
+                      />
+                    </Box>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <Typography variant="h6">Day:</Typography>
+                      {["M", "T", "W", "T", "F", "S", "Su"].map(
+                        (day, index) => (
+                          <Box
+                            key={index}
+                            sx={{ display: "flex", alignItems: "center" }}
+                          >
+                            <Typography variant="body1">{day}</Typography>
+                            <Checkbox
+                              checked={repeatOptions[index] || false}
+                              onChange={(e) => {
+                                const updatedOptions = [...repeatOptions];
+                                updatedOptions[index] = e.target.checked;
+                                setRepeatOptions(updatedOptions);
+                              }}
+                            />
+                          </Box>
+                        )
+                      )}
+                    </Box>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <Typography variant="h6">Action:</Typography>
+                      <FormControl>
+                        <InputLabel id="action">Action</InputLabel>
+                        <Select
+                          labelId="Action"
+                          label="Action"
+                          value={selectedAction}
+                          sx={{ minWidth: 110 }}
+                          onChange={(e) => setSelectedAction(e.target.value)}
+                        >
+                          <MenuItem value={"turn_on"}>Turn on</MenuItem>
+                          <MenuItem value={"turn_off"}>Turn off</MenuItem>
+                          <MenuItem value={"set_value"}>Set value</MenuItem>
+                        </Select>
+                      </FormControl>
+                      {selectedAction === "set_value" && (
+                        <>
+                          {type === "fan_device" && (
+                            <TextField
+                              label="Value"
+                              type="number"
+                              inputProps={{ min: 0, max: 100 }}
+                              value={actionValue}
+                              onChange={(e) =>
+                                setActionValue(Number(e.target.value))
+                              }
+                              sx={{ width: 120 }}
+                            />
+                          )}
+                          {type === "light_device" && (
+                            <TextField
+                              label="Value"
+                              type="color"
+                              value={actionValue || "#000000"}
+                              onChange={(e) => setActionValue(e.target.value)}
+                              sx={{ width: 120 }}
+                            />
+                          )}
+                        </>
+                      )}
+                    </Box>
+                    <Box>
+                      {/* save button */}
+                      <Button
+                        variant="contained"
+                        color="primary"
+                        onClick={updateSchedule}
+                      >
+                        Save
+                      </Button>
+                    </Box>
+                  </Paper>
                 </Box>
-              </Paper>
-            </Box>
 
-            <Box sx={{ display: "flex", flexDirection: "column" }}>
-              <Typography variant="h3">Automation</Typography>
-              <Paper
-                elevation={3}
-                sx={{
-                  flex: 1,
-                  marginRight: 2,
-                  padding: 2,
-                  display: "flex",
-                  flexDirection: "column",
-                  justifyContent: "center",
-                }}
-              >
-                <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                  <Typography variant="h6">When </Typography>
-                  <FormControl>
-                    <InputLabel id="data">Data</InputLabel>
-                    <Select labelId="Data" label="Data" sx={{ minWidth: 140 }}>
-                      <MenuItem value={"temperature"}>Temperature</MenuItem>
-                      <MenuItem value={"humidity"}>Humidity</MenuItem>
-                      <MenuItem value={"light"}>Light level</MenuItem>
-                      <MenuItem value={"distance"}>Distance</MenuItem>
-                    </Select>
-                  </FormControl>
-                  <Typography variant="h6">is </Typography>
-                  <FormControl>
-                    <InputLabel id="condition">Condition</InputLabel>
-                    <Select
-                      labelId="Condition"
-                      label="Condition"
-                      sx={{ minWidth: 110 }}
-                    >
-                      <MenuItem value={"<"}>&lt;</MenuItem>
-                      <MenuItem value={">"}>&gt;</MenuItem>
-                      <MenuItem value={"="}>=</MenuItem>
-                    </Select>
-                  </FormControl>
-                  <Typography variant="h6"> </Typography>
-                  <TextField label="Value" sx={{ width: 120 }} />
-                  <Typography variant="h6">, </Typography>
-                  <FormControl>
-                    <InputLabel id="do">Do</InputLabel>
-                    <Select
-                      labelId="Do"
-                      label="Do"
-                      sx={{ minWidth: 110 }}
-                      onChange={(e) => setAutomationValue(e.target.value)}
-                    >
-                      <MenuItem value={"turn_on"}>Turn on</MenuItem>
-                      <MenuItem value={"turn_off"}>Turn off</MenuItem>
-                      <MenuItem value={"set_value"}>Set value</MenuItem>
-                    </Select>
-                  </FormControl>
-                  <FormControl>
-                    <InputLabel id="device">Device</InputLabel>
-                    <Select
-                      labelId="Device"
-                      label="Device"
-                      sx={{ minWidth: 110 }}
-                    >
-                      <MenuItem value={"fan"}>Fan</MenuItem>
-                      <MenuItem value={"led"}>LED</MenuItem>
-                    </Select>
-                  </FormControl>
-                  {automationValue === "set_value" && (
-                    <TextField label="Value" sx={{ width: 120 }} />
-                  )}
-                  <Button variant="contained" color="primary">
-                    Add
-                  </Button>
+                <Box sx={{ display: "flex", flexDirection: "column" }}>
+                  <Typography variant="h3">Automation</Typography>
+                  <Paper
+                    elevation={3}
+                    sx={{
+                      flex: 1,
+                      marginRight: 2,
+                      padding: 2,
+                      display: "flex",
+                      flexDirection: "column",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                      <Typography variant="h6">When </Typography>
+                      <FormControl>
+                        <InputLabel id="data">Data</InputLabel>
+                        <Select
+                          labelId="Data"
+                          label="Data"
+                          sx={{ minWidth: 140 }}
+                          value={automationData}
+                          onChange={(e) => setAutomationData(e.target.value)}
+                        >
+                          <MenuItem value={"temperature"}>Temperature</MenuItem>
+                          <MenuItem value={"humidity"}>Humidity</MenuItem>
+                          <MenuItem value={"light"}>Light level</MenuItem>
+                        </Select>
+                      </FormControl>
+                      <Typography variant="h6">is </Typography>
+                      <FormControl>
+                        <InputLabel id="condition">Condition</InputLabel>
+                        <Select
+                          labelId="Condition"
+                          label="Condition"
+                          sx={{ minWidth: 110 }}
+                          value={automationCondition}
+                          onChange={(e) =>
+                            setAutomationCondition(e.target.value)
+                          }
+                        >
+                          <MenuItem value={"<"}>&lt;</MenuItem>
+                          <MenuItem value={">"}>&gt;</MenuItem>
+                          <MenuItem value={"="}>=</MenuItem>
+                        </Select>
+                      </FormControl>
+                      <TextField
+                        label="Value"
+                        sx={{ width: 120 }}
+                        value={automationValue}
+                        onChange={(e) => setAutomationValue(e.target.value)}
+                      />
+                      <Typography variant="h6">, </Typography>
+                      <FormControl>
+                        <InputLabel id="do">Do</InputLabel>
+                        <Select
+                          labelId="Do"
+                          label="Do"
+                          sx={{ minWidth: 110 }}
+                          value={automationDo}
+                          onChange={(e) => setAutomationDo(e.target.value)}
+                        >
+                          <MenuItem value={"turn_on"}>Turn on</MenuItem>
+                          <MenuItem value={"turn_off"}>Turn off</MenuItem>
+                          <MenuItem value={"set_value"}>Set value</MenuItem>
+                        </Select>
+                      </FormControl>
+                      <FormControl>
+                        <InputLabel id="device">Device</InputLabel>
+                        <Select
+                          labelId="Device"
+                          label="Device"
+                          sx={{ minWidth: 110 }}
+                          value={automationDevice}
+                          onChange={(e) => setAutomationDevice(e.target.value)}
+                        >
+                          <MenuItem value={"fan"}>Fan</MenuItem>
+                          <MenuItem value={"led"}>LED</MenuItem>
+                        </Select>
+                      </FormControl>
+                      {automationDo === "set_value" && (
+                        <TextField
+                          label="Value"
+                          sx={{ width: 120 }}
+                          value={automationDeviceValue
+
+                          }
+                          onChange={(e) =>
+                            setAutomationDeviceValue(e.target.value)
+                          }
+                        />
+                      )}
+                      <Button
+                        variant="contained"
+                        color="primary"
+                        onClick={updateAutomation}
+                      >
+                        Save
+                      </Button>
+                    </Box>
+                  </Paper>
                 </Box>
-              </Paper>
-            </Box>
+              </>
+            ) : (
+              <></>
+            )}
           </>
         )}
       </Box>
