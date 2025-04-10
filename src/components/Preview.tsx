@@ -11,6 +11,13 @@ import FavoriteIcon from "@mui/icons-material/Favorite";
 import { useNavigate } from "react-router-dom";
 import icons from "../utils/Icons";
 import WaterDropIcon from "@mui/icons-material/WaterDrop";
+import api from "../api/axios";
+
+const device_map = {
+  fan_device: "FAN_1",
+  light_device: "LED_1",
+};
+
 
 export default function Preview({ data }) {
   const [liked, setLiked] = useState(data.liked);
@@ -18,11 +25,33 @@ export default function Preview({ data }) {
   const [status, setStatus] = useState(data.data.status);
   const [sensorData, setSensorData] = useState(data.data);
 
+  const [update, setUpdate] = useState(false);
+
+  const updateDevice = async (deviceId, status) => {
+    try {
+      const res = await api.post("/device_status", {
+        _id: device_map[data.type],
+        status,
+      });
+      const data = await res.json();
+      console.log(data);
+    }
+    catch (error) {
+      console.log(error);
+    }
+  }
+
+  useEffect(() => {
+    updateDevice(data._id, status);
+  }, [update]);
+
+
   useEffect(() => {
     setLiked(data.liked);
     setStatus(data.data.status);
     setSensorData(data.data);
   }, [data]);
+
   const toggleLike = () => {
     setLiked(!liked); // Toggle like state
   };
@@ -133,7 +162,7 @@ export default function Preview({ data }) {
           {status != null && (
             <Switch
               checked={Boolean(status === "ON")}
-              onChange={(event) => setStatus(status === "ON" ? "OFF" : "ON")}
+              onChange={(event) => {setStatus(status === "ON" ? "OFF" : "ON"); setUpdate(!update);}}
               onClick={(e) => e.stopPropagation()}
               color={status ? "success" : "error"}
             />

@@ -15,7 +15,7 @@ import {
   Skeleton,
   Slider,
 } from "@mui/material";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams } from "react-router-dom";
 import axios from "axios";
 import icons from "../utils/Icons";
@@ -24,6 +24,11 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { TimePicker } from "@mui/x-date-pickers/TimePicker";
 import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
+import timezone from "dayjs/plugin/timezone";
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 const data_init = [
   {
@@ -77,33 +82,33 @@ export default function Devices() {
   const [update, setUpdate] = useState(false);
   // loading state
   const [loading, setLoading] = useState(true);
+  const firstLoadRef = useRef(true);
 
   const getData = async (type) => {
     try {
       const res = await axios.get(`http://localhost:5000/${type}`);
       const { status, data, schedule, automation } = res.data;
-
       const device = data_init.find((item) => item.type === type);
       const update_device = { ...device, status, data, schedule, automation };
       setData(update_device);
-      console.log(update_device);
-      // Extract schedule data and update state
-      setTime(dayjs(update_device.schedule.time));
-      setRepeat(update_device.schedule.repeat || false);
-      setRepeatOptions(
-        update_device.schedule.repeatOptions || [
-          false,
-          false,
-          false,
-          false,
-          false,
-          false,
-          false,
-        ]
-      );
-      setSelectedAction(update_device.schedule.selectedAction || "");
-      setActionValue(update_device.schedule.actionValue || null);
-
+      if (firstLoadRef.current) {
+        setTime(update_device.schedule.time);
+        setRepeat(update_device.schedule.repeat || false);
+        setRepeatOptions(
+          update_device.schedule.repeatOptions || [
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+          ]
+        );
+        setSelectedAction(update_device.schedule.selectedAction || "");
+        setActionValue(update_device.schedule.actionValue || null);
+      }
+      firstLoadRef.current = false;
       setLoading(false);
     } catch (error) {
       console.log(error);
@@ -155,17 +160,23 @@ export default function Devices() {
           deviceValue: automationDeviceValue,
         },
       };
-      const res = await axios.post(`http://localhost:5000/automation`, automation);
+      const res = await axios.post(
+        `http://localhost:5000/automation`,
+        automation
+      );
       console.log(res.data);
     } catch (error) {
       console.log(error);
     }
-  }
+  };
+
   useEffect(() => {
     getData(type);
-    setInterval(() => {
+    
+    let interval = setInterval(() => {
       getData(type);
     }, 5000);
+    return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
@@ -287,7 +298,7 @@ export default function Devices() {
                     <Slider
                       onChange={(e, newvalue) => {
                         setData({ ...data, data: { fanspeed: newvalue } });
-                        updateData();
+                        setUpdate(!update);
                       }}
                       value={data.data.fanspeed}
                       aria-label="Fan speed slider"
@@ -318,8 +329,10 @@ export default function Devices() {
                       <LocalizationProvider dateAdapter={AdapterDayjs}>
                         <TimePicker
                           label="At"
-                          value={time}
-                          onChange={(newValue) => setTime(newValue)}
+                          value={dayjs(time)}
+                          onChange={(newValue) =>
+                            setTime(newValue.utc().toISOString())
+                          }
                         />
                       </LocalizationProvider>
                     </Box>
@@ -490,9 +503,7 @@ export default function Devices() {
                         <TextField
                           label="Value"
                           sx={{ width: 120 }}
-                          value={automationDeviceValue
-
-                          }
+                          value={automationDeviceValue}
                           onChange={(e) =>
                             setAutomationDeviceValue(e.target.value)
                           }
