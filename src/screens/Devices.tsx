@@ -120,7 +120,9 @@ export default function Devices() {
       const res = await axios.post(`http://localhost:5000/device_status`, {
         _id: device_map[type],
         status: data.status,
-        data: data.data.fanspeed ? data.data.fanspeed : data.data.ledcolor,
+        data: data.data.fanspeed
+          ? Number(data.data.fanspeed)
+          : data.data.ledcolor,
       });
       console.log(res.data);
     } catch (error) {
@@ -172,7 +174,7 @@ export default function Devices() {
 
   useEffect(() => {
     getData(type);
-    
+
     let interval = setInterval(() => {
       getData(type);
     }, 5000);
@@ -229,22 +231,25 @@ export default function Devices() {
                   {data.status != null && (
                     <>
                       <Typography
-                        variant="h6"
-                        color={data.status === "ON" ? "success" : "error"}
+                      variant="h6"
+                      color={data.status === "ON" ? "success" : "error"}
                       >
-                        Status: {data.status === "ON" ? "On" : "Off"}
+                      Status: {data.status === "ON" ? "On" : "Off"}
                       </Typography>
                       <Switch
-                        checked={Boolean(data?.status === "ON")}
-                        onChange={() => {
-                          setData({
-                            ...data,
-                            status: data.status === "ON" ? "OFF" : "ON",
-                          });
-                          setUpdate(!update);
-                        }}
-                        //success color if on, error color if off
-                        color={data.status === "ON" ? "success" : "error"}
+                      checked={Boolean(data?.status === "ON")}
+                      onChange={() => {
+                        const newStatus = data.status === "ON" ? "OFF" : "ON";
+                        const updatedData =
+                        newStatus === "OFF"
+                          && type === "light_device"
+                          ? { ...data, status: newStatus, data: { ...data.data, ledcolor: "#000000" } }
+                          : { ...data, status: newStatus, data: { ...data.data, fanspeed: 0 } }
+                        setData(updatedData);
+                        setUpdate(!update);
+                      }}
+                      //success color if on, error color if off
+                      color={data.status === "ON" ? "success" : "error"}
                       />
                     </>
                   )}
@@ -265,7 +270,7 @@ export default function Devices() {
                 )}
 
                 {type === "light_device" && (
-                  <>
+                    <>
                     <Typography variant="h6" sx={{ color: "text.secondary" }}>
                       LED Color:
                     </Typography>
@@ -273,15 +278,17 @@ export default function Devices() {
                       type="color"
                       value={data.data.ledcolor ?? "#000000"}
                       onChange={(e) => {
-                        setData({
-                          ...data,
-                          data: { ...data.data, ledcolor: e.target.value },
-                        });
-                        setUpdate(!update);
+                      const newColor = e.target.value;
+                      setData({
+                        ...data,
+                        status: newColor === "#000000" ? "OFF" : "ON",
+                        data: { ...data.data, ledcolor: newColor },
+                      });
+                      setUpdate(!update);
                       }}
                       sx={{ width: 100 }}
                     />
-                  </>
+                    </>
                 )}
 
                 {type === "light" && (
@@ -297,7 +304,18 @@ export default function Devices() {
                     </Typography>
                     <Slider
                       onChange={(e, newvalue) => {
-                        setData({ ...data, data: { fanspeed: newvalue } });
+                        if (newvalue == 0)
+                          setData({
+                            ...data,
+                            status: "OFF",
+                            data: { fanspeed: newvalue },
+                          });
+                        else
+                          setData({
+                            ...data,
+                            status: "ON",
+                            data: { fanspeed: newvalue },
+                          });
                         setUpdate(!update);
                       }}
                       value={data.data.fanspeed}

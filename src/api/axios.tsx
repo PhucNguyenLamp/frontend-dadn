@@ -2,7 +2,7 @@ import axios from "axios";
 // import { config } from "../../../backend/config/database";
 
 const api = axios.create({
-  baseURL: "http://localhost:3000/",
+  baseURL: "http://localhost:5000/",
 });
 
 api.interceptors.request.use(

@@ -18,7 +18,6 @@ const device_map = {
   light_device: "LED_1",
 };
 
-
 export default function Preview({ data }) {
   const [liked, setLiked] = useState(data.liked);
   const [hover, setHover] = useState(false);
@@ -28,23 +27,27 @@ export default function Preview({ data }) {
   const [update, setUpdate] = useState(false);
 
   const updateDevice = async (deviceId, status) => {
+    const device_name = device_map[data.type];
+    console.log(device_name, status);
     try {
       const res = await api.post("/device_status", {
-        _id: device_map[data.type],
+        _id: device_name,
         status,
+        data:
+          device_name === "FAN_1"
+            ? sensorData.fanspeed
+            : sensorData.ledcolor,
       });
       const data = await res.json();
       console.log(data);
-    }
-    catch (error) {
+    } catch (error) {
       console.log(error);
     }
-  }
+  };
 
   useEffect(() => {
-    updateDevice(data._id, status);
+    updateDevice(data.type, status);
   }, [update]);
-
 
   useEffect(() => {
     setLiked(data.liked);
@@ -162,7 +165,19 @@ export default function Preview({ data }) {
           {status != null && (
             <Switch
               checked={Boolean(status === "ON")}
-              onChange={(event) => {setStatus(status === "ON" ? "OFF" : "ON"); setUpdate(!update);}}
+              onChange={(event) => {
+                setSensorData((prevData) => {
+                  if (status === "ON" && data.type === "fan_device") {
+                    return { ...prevData, fanspeed: 0 };
+                  } else if (status === "ON") {
+                    return { ...prevData, ledcolor: "#000000" };
+                  } else {
+                    return prevData;
+                  }
+                });
+                setStatus(status === "ON" ? "OFF" : "ON");
+                setUpdate(!update);
+              }}
               onClick={(e) => e.stopPropagation()}
               color={status ? "success" : "error"}
             />
