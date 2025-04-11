@@ -107,9 +107,17 @@ export default function Devices() {
         );
         setSelectedAction(update_device.schedule.selectedAction || "");
         setActionValue(update_device.schedule.actionValue || null);
+
+        setAutomationData(update_device.automation.data);
+        setAutomationCondition(update_device.automation.condition);
+        setAutomationValue(update_device.automation.value);
+        setAutomationDo(update_device.automation.do);
+        setAutomationDevice(update_device.automation.device);
+        setAutomationDeviceValue(update_device.automation.deviceValue);
+
+        setLoading(false);
       }
       firstLoadRef.current = false;
-      setLoading(false);
     } catch (error) {
       console.log(error);
     }
@@ -231,25 +239,32 @@ export default function Devices() {
                   {data.status != null && (
                     <>
                       <Typography
-                      variant="h6"
-                      color={data.status === "ON" ? "success" : "error"}
+                        variant="h6"
+                        color={data.status === "ON" ? "success" : "error"}
                       >
-                      Status: {data.status === "ON" ? "On" : "Off"}
+                        Status: {data.status === "ON" ? "On" : "Off"}
                       </Typography>
                       <Switch
-                      checked={Boolean(data?.status === "ON")}
-                      onChange={() => {
-                        const newStatus = data.status === "ON" ? "OFF" : "ON";
-                        const updatedData =
-                        newStatus === "OFF"
-                          && type === "light_device"
-                          ? { ...data, status: newStatus, data: { ...data.data, ledcolor: "#000000" } }
-                          : { ...data, status: newStatus, data: { ...data.data, fanspeed: 0 } }
-                        setData(updatedData);
-                        setUpdate(!update);
-                      }}
-                      //success color if on, error color if off
-                      color={data.status === "ON" ? "success" : "error"}
+                        checked={Boolean(data?.status === "ON")}
+                        onChange={() => {
+                          const newStatus = data.status === "ON" ? "OFF" : "ON";
+                          const updatedData =
+                            newStatus === "OFF" && type === "light_device"
+                              ? {
+                                  ...data,
+                                  status: newStatus,
+                                  data: { ...data.data, ledcolor: "#000000" },
+                                }
+                              : {
+                                  ...data,
+                                  status: newStatus,
+                                  data: { ...data.data, fanspeed: 0 },
+                                };
+                          setData(updatedData);
+                          setUpdate(!update);
+                        }}
+                        //success color if on, error color if off
+                        color={data.status === "ON" ? "success" : "error"}
                       />
                     </>
                   )}
@@ -270,7 +285,7 @@ export default function Devices() {
                 )}
 
                 {type === "light_device" && (
-                    <>
+                  <>
                     <Typography variant="h6" sx={{ color: "text.secondary" }}>
                       LED Color:
                     </Typography>
@@ -278,17 +293,17 @@ export default function Devices() {
                       type="color"
                       value={data.data.ledcolor ?? "#000000"}
                       onChange={(e) => {
-                      const newColor = e.target.value;
-                      setData({
-                        ...data,
-                        status: newColor === "#000000" ? "OFF" : "ON",
-                        data: { ...data.data, ledcolor: newColor },
-                      });
-                      setUpdate(!update);
+                        const newColor = e.target.value;
+                        setData({
+                          ...data,
+                          status: newColor === "#000000" ? "OFF" : "ON",
+                          data: { ...data.data, ledcolor: newColor },
+                        });
+                        setUpdate(!update);
                       }}
                       sx={{ width: 100 }}
                     />
-                    </>
+                  </>
                 )}
 
                 {type === "light" && (
