@@ -503,9 +503,20 @@ export default function Devices() {
                       </FormControl>
                       <TextField
                         label="Value"
+                        type="number"
                         sx={{ width: 120 }}
                         value={automationValue}
-                        onChange={(e) => setAutomationValue(e.target.value)}
+                        onChange={(e) => {
+                          const val = Number(e.target.value);
+                          const clamped = Math.min(100, Math.max(0, val)); // Clamp between 0 and 100
+                          setAutomationValue(clamped);
+                        }}
+                        slotProps={{
+                          input: {
+                            min: 0,
+                            max: 100,
+                          },
+                        }}
                       />
                       <Typography variant="h6">, </Typography>
                       <FormControl>
@@ -536,14 +547,37 @@ export default function Devices() {
                         </Select>
                       </FormControl>
                       {automationDo === "set_value" && (
-                        <TextField
-                          label="Value"
-                          sx={{ width: 120 }}
-                          value={automationDeviceValue}
-                          onChange={(e) =>
-                            setAutomationDeviceValue(e.target.value)
-                          }
-                        />
+                        <>
+                          {automationDevice === "fan" ? (
+                            <TextField
+                              label="Value"
+                              type="number"
+                              sx={{ width: 120 }}
+                              value={automationDeviceValue}
+                              onChange={(e) => {
+                                const val = Number(e.target.value);
+                                const clamped = Math.min(100, Math.max(0, val)); // Clamp between 0 and 100
+                                setAutomationDeviceValue(clamped);
+                              }}
+                              slotProps={{
+                                input: {
+                                  min: 0,
+                                  max: 100,
+                                },
+                              }}
+                            />
+                          ) : (
+                            <TextField
+                              label="Value"
+                              type="color"
+                              sx={{ width: 120 }}
+                              value={automationDeviceValue || "#000000"}
+                              onChange={(e) =>
+                                setAutomationDeviceValue(e.target.value)
+                              }
+                            />
+                          )}
+                        </>
                       )}
                       <Button
                         variant="contained"
