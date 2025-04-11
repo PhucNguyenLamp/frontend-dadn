@@ -109,6 +109,7 @@ export default function Preview({ data }) {
             <Typography variant="h6" sx={{ color: "text.secondary" }}>
               {"/"}
             </Typography>
+            
             <Typography variant="h6" sx={{ color: "text.secondary" }}>
               {sensorData.humidity ?? "N/A"}%
             </Typography>

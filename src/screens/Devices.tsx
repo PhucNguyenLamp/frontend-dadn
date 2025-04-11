@@ -150,6 +150,7 @@ export default function Devices() {
           actionValue,
         },
       };
+      console.log(schedule);
       const res = await axios.post(`http://localhost:5000/schedule`, schedule);
       console.log(res.data);
     } catch (error) {
@@ -363,9 +364,11 @@ export default function Devices() {
                         <TimePicker
                           label="At"
                           value={dayjs(time)}
-                          onChange={(newValue) =>
-                            setTime(newValue.utc().toISOString())
-                          }
+                          onChange={(newValue) => {
+                            setTime(newValue.toDate());
+                            // console.log(newValue.toDate());
+                            // console.log(Date())
+                          }}
                         />
                       </LocalizationProvider>
                     </Box>
