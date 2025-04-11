@@ -34,9 +34,7 @@ export default function Preview({ data }) {
         _id: device_name,
         status,
         data:
-          device_name === "FAN_1"
-            ? sensorData.fanspeed
-            : sensorData.ledcolor,
+          device_name === "FAN_1" ? sensorData.fanspeed : sensorData.ledcolor,
       });
       const data = await res.json();
       console.log(data);
@@ -102,14 +100,13 @@ export default function Preview({ data }) {
         </Box>
         {/* 🔹 Dynamic Sensor Data Display */}
         {type === "temperature_humidity" && (
-          <Box sx={{ display: "flex" }}>
+          <Box sx={{ display: "flex", flexDirection: "column" }}>
             <Typography variant="h6" sx={{ color: "text.secondary" }}>
               {sensorData.temperature ?? "N/A"}°C
             </Typography>
-            <Typography variant="h6" sx={{ color: "text.secondary" }}>
+            {/* <Typography variant="h6" sx={{ color: "text.secondary" }}>
               {"/"}
-            </Typography>
-            
+            </Typography> */}
             <Typography variant="h6" sx={{ color: "text.secondary" }}>
               {sensorData.humidity ?? "N/A"}%
             </Typography>
@@ -156,7 +153,7 @@ export default function Preview({ data }) {
               // position: "absolute",
               // bottom: 8,
               // right: 8,
-              opacity: liked ? 1 : 0.5,
+              opacity: liked ? 0 : 0,
               transition: "opacity 0.3s ease",
             }}
           >
