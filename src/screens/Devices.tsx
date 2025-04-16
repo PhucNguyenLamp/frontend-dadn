@@ -90,6 +90,9 @@ export default function Devices() {
       const { status, data, schedule, automation } = res.data;
       const device = data_init.find((item) => item.type === type);
       const update_device = { ...device, status, data, schedule, automation };
+
+      console.log(res.data)
+
       setData(update_device);
       if (firstLoadRef.current) {
         setTime(update_device.schedule.time);
