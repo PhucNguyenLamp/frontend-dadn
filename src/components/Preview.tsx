@@ -65,6 +65,7 @@ export default function Preview({ data }) {
       <Paper
         sx={{
           width: 300,
+          height: 150,
           m: 1,
           p: 2,
           display: "flex",
