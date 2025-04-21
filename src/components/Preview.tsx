@@ -36,7 +36,7 @@ export default function Preview({ data }) {
         data:
           device_name === "FAN_1" ? sensorData.fanspeed : sensorData.ledcolor,
       });
-      const data = await res.json();
+      const data = await res.data;
       console.log(data);
     } catch (error) {
       console.log(error);
@@ -65,6 +65,7 @@ export default function Preview({ data }) {
       <Paper
         sx={{
           width: 300,
+          height: 150,
           m: 1,
           p: 2,
           display: "flex",

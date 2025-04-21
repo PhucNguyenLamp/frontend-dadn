@@ -14,6 +14,13 @@ import {
   TextField,
   Skeleton,
   Slider,
+  TableContainer,
+  Table,
+  TableRow,
+  TableHead,
+  TableCell,
+  TableBody,
+  Snackbar,
 } from "@mui/material";
 import { useEffect, useState, useRef } from "react";
 import { useParams } from "react-router-dom";
@@ -26,6 +33,7 @@ import { TimePicker } from "@mui/x-date-pickers/TimePicker";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
+import DeleteIcon from "@mui/icons-material/Delete";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -56,7 +64,8 @@ export default function Devices() {
   const { type } = useParams();
   const [data, setData] = useState({});
   // schedule
-  const [time, setTime] = useState();
+  const [time, setTime] = useState(new Date());
+  const [to, setTo] = useState(new Date(new Date().getTime() + 30 * 60000));
   const [repeat, setRepeat] = useState(false);
   const [repeatOptions, setRepeatOptions] = useState([
     false,
@@ -67,16 +76,19 @@ export default function Devices() {
     false,
     false,
   ]);
-  const [selectedAction, setSelectedAction] = useState("");
-  const [actionValue, setActionValue] = useState(null);
+  const [selectedAction, setSelectedAction] = useState("turn_on");
+  const [actionValue, setActionValue] = useState("");
 
   // automation
-  const [automationData, setAutomationData] = useState([]);
+  const [automationData, setAutomationData] = useState("");
   const [automationCondition, setAutomationCondition] = useState("");
   const [automationValue, setAutomationValue] = useState("");
   const [automationDo, setAutomationDo] = useState("");
   const [automationDevice, setAutomationDevice] = useState("");
-  const [automationDeviceValue, setAutomationDeviceValue] = useState(null);
+  const [automationDeviceValue, setAutomationDeviceValue] = useState("");
+
+  const [scheduleList, setScheduleList] = useState([]);
+  const [automationList, setAutomationList] = useState([]);
 
   // update helper
   const [update, setUpdate] = useState(false);
@@ -84,37 +96,29 @@ export default function Devices() {
   const [loading, setLoading] = useState(true);
   const firstLoadRef = useRef(true);
 
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+
   const getData = async (type) => {
     try {
       const res = await axios.get(`http://localhost:5000/${type}`);
-      const { status, data, schedule, automation } = res.data;
+      let { status, data, schedule, automation } = res.data;
+      // temporary fix for schedule
+
       const device = data_init.find((item) => item.type === type);
       const update_device = { ...device, status, data, schedule, automation };
+
+      console.log(res.data);
+
       setData(update_device);
       if (firstLoadRef.current) {
-        setTime(update_device.schedule.time);
-        setRepeat(update_device.schedule.repeat || false);
-        setRepeatOptions(
-          update_device.schedule.repeatOptions || [
-            false,
-            false,
-            false,
-            false,
-            false,
-            false,
-            false,
-          ]
+        setScheduleList(schedule);
+        setAutomationList(automation);
+        setAutomationDevice(
+          res.data.devicename === "fan_device" ? "fan" : "led"
         );
-        setSelectedAction(update_device.schedule.selectedAction || "");
-        setActionValue(update_device.schedule.actionValue || null);
-
-        setAutomationData(update_device.automation.data);
-        setAutomationCondition(update_device.automation.condition);
-        setAutomationValue(update_device.automation.value);
-        setAutomationDo(update_device.automation.do);
-        setAutomationDevice(update_device.automation.device);
-        setAutomationDeviceValue(update_device.automation.deviceValue);
-
+        setAutomationDeviceValue(
+          res.data.devicename === "fan_device" ? 0 : "#000000"
+        );
         setLoading(false);
       }
       firstLoadRef.current = false;
@@ -138,38 +142,65 @@ export default function Devices() {
     }
   };
 
-  const updateSchedule = async () => {
+  const addSchedule = async () => {
     try {
       const schedule = {
         _id: device_map[type],
-        schedule: {
-          time,
-          repeat,
-          repeatOptions,
-          selectedAction,
-          actionValue,
-        },
+        schedule: [
+          ...scheduleList,
+          { time, to, repeat, repeatOptions, selectedAction, actionValue },
+        ],
       };
-      console.log(schedule);
+      setScheduleList((prev) => schedule.schedule);
       const res = await axios.post(`http://localhost:5000/schedule`, schedule);
-      console.log(res.data);
     } catch (error) {
       console.log(error);
     }
   };
 
-  const updateAutomation = async () => {
+  const updateSchedule = async (updatedList) => {
+    try {
+      const schedule = {
+        _id: device_map[type],
+        schedule: updatedList,
+      };
+      const res = await axios.post(`http://localhost:5000/schedule`, schedule);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const addAutomation = async () => {
     try {
       const automation = {
         _id: device_map[type],
-        automation: {
-          data: automationData,
-          condition: automationCondition,
-          value: automationValue,
-          do: automationDo,
-          device: automationDevice,
-          deviceValue: automationDeviceValue,
-        },
+        automation: [
+          ...automationList,
+          {
+            data: automationData,
+            condition: automationCondition,
+            value: automationValue,
+            do: automationDo,
+            device: automationDevice,
+            deviceValue: automationDeviceValue,
+          },
+        ],
+      };
+      setAutomationList((prev) => automation.automation);
+      const res = await axios.post(
+        `http://localhost:5000/automation`,
+        automation
+      );
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const updateAutomation = async (updatedList) => {
+    try {
+      const automation = {
+        _id: device_map[type],
+        automation: updatedList,
       };
       const res = await axios.post(
         `http://localhost:5000/automation`,
@@ -344,6 +375,7 @@ export default function Devices() {
             </Box>
             {type === "light_device" || type === "fan_device" ? (
               <>
+                {/* TODO: FIX SCHEDULE RANGE */}
                 <Box sx={{ display: "flex", flexDirection: "column" }}>
                   <Typography variant="h3">Schedule</Typography>
                   <Paper
@@ -362,12 +394,20 @@ export default function Devices() {
                       <Typography variant="h6">Time: </Typography>
                       <LocalizationProvider dateAdapter={AdapterDayjs}>
                         <TimePicker
-                          label="At"
+                          label="From"
                           value={dayjs(time)}
                           onChange={(newValue) => {
                             setTime(newValue.toDate());
-                            // console.log(newValue.toDate());
-                            // console.log(Date())
+                          }}
+                        />
+                      </LocalizationProvider>
+                      <Typography variant="h6"> - </Typography>
+                      <LocalizationProvider dateAdapter={AdapterDayjs}>
+                        <TimePicker
+                          label="To"
+                          value={dayjs(to)}
+                          onChange={(newValue) => {
+                            setTo(newValue.toDate());
                           }}
                         />
                       </LocalizationProvider>
@@ -447,11 +487,65 @@ export default function Devices() {
                       <Button
                         variant="contained"
                         color="primary"
-                        onClick={updateSchedule}
+                        onClick={() => {
+                          addSchedule();
+                          setSnackbarOpen(true);
+                        }}
                       >
-                        Save
+                        ADD
                       </Button>
                     </Box>
+                    {/* List of added schedules */}
+                    <TableContainer component={Paper} sx={{ marginTop: 2 }}>
+                      <Table aria-label="schedule list">
+                        <TableHead>
+                          <TableRow>
+                            <TableCell>Time</TableCell>
+                            <TableCell>Repeat</TableCell>
+                            <TableCell>Days</TableCell>
+                            <TableCell>Action</TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {scheduleList.map((schedule, index) => (
+                            <TableRow key={index}>
+                              <TableCell>
+                                {`${getTimeString(
+                                  new Date(schedule.time)
+                                )} - ${getTimeString(new Date(schedule.to))}`}
+                              </TableCell>
+                              <TableCell>
+                                {schedule.repeat ? "Yes" : "No"}
+                              </TableCell>
+                              <TableCell>
+                                {daysArrayToString(schedule.repeatOptions)}
+                              </TableCell>
+                              <TableCell>
+                                {getAction(
+                                  schedule.selectedAction,
+                                  schedule.actionValue
+                                )}
+                              </TableCell>
+                              <TableCell>
+                                <Button
+                                  variant="outlined"
+                                  color="error"
+                                  onClick={() => {
+                                    const updatedList = scheduleList.filter(
+                                      (_, i) => i !== index
+                                    );
+                                    setScheduleList(updatedList);
+                                    updateSchedule(updatedList);
+                                  }}
+                                >
+                                  <DeleteIcon />
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
                   </Paper>
                 </Box>
 
@@ -540,53 +634,126 @@ export default function Devices() {
                           label="Device"
                           sx={{ minWidth: 110 }}
                           value={automationDevice}
+                          disabled
                           onChange={(e) => setAutomationDevice(e.target.value)}
                         >
                           <MenuItem value={"fan"}>Fan</MenuItem>
                           <MenuItem value={"led"}>LED</MenuItem>
                         </Select>
                       </FormControl>
-                      {automationDo === "set_value" && (
+                        {automationDo === "set_value" && (
                         <>
                           {automationDevice === "fan" ? (
-                            <TextField
-                              label="Value"
-                              type="number"
-                              sx={{ width: 120 }}
-                              value={automationDeviceValue}
-                              onChange={(e) => {
-                                const val = Number(e.target.value);
-                                const clamped = Math.min(100, Math.max(0, val)); // Clamp between 0 and 100
-                                setAutomationDeviceValue(clamped);
-                              }}
-                              slotProps={{
-                                input: {
-                                  min: 0,
-                                  max: 100,
-                                },
-                              }}
-                            />
+                          <TextField
+                            label="Value"
+                            type="number"
+                            sx={{ width: 120 }}
+                            value={automationDeviceValue}
+                            onChange={(e) => {
+                            const val = Number(e.target.value);
+                            const clamped = Math.min(100, Math.max(0, val)); // Clamp between 0 and 100
+                            setAutomationDeviceValue(clamped);
+                            }}
+                            slotProps={{
+                            input: {
+                              min: 0,
+                              max: 100,
+                            },
+                            }}
+                          />
                           ) : (
-                            <TextField
-                              label="Value"
-                              type="color"
-                              sx={{ width: 120 }}
-                              value={automationDeviceValue || "#000000"}
-                              onChange={(e) =>
-                                setAutomationDeviceValue(e.target.value)
-                              }
-                            />
+                          <TextField
+                            label="Value"
+                            type="color"
+                            sx={{ width: 120 }}
+                            value={automationDeviceValue}
+                            onChange={(e) =>
+                            setAutomationDeviceValue(e.target.value)
+                            }
+                          />
                           )}
                         </>
-                      )}
+                        )}
                       <Button
                         variant="contained"
                         color="primary"
-                        onClick={updateAutomation}
+                        onClick={() => {
+                          if (
+                            !automationData ||
+                            !automationCondition ||
+                            automationValue === "" ||
+                            !automationDo ||
+                            !automationDevice
+                          ) {
+                            setSnackbarOpen(true);
+                            return;
+                          }
+                          addAutomation();
+                          setSnackbarOpen(true);
+                        }}
                       >
-                        Save
+                        ADD
                       </Button>
+                      <Snackbar
+                        open={snackbarOpen}
+                        autoHideDuration={2000}
+                        onClose={() => setSnackbarOpen(false)}
+                        message={
+                          !automationData ||
+                          !automationCondition ||
+                          automationValue === "" ||
+                          !automationDo ||
+                          !automationDevice
+                            ? "Please fill all fields"
+                            : "Added!"
+                        }
+                      />
                     </Box>
+                    {/* List of added schedules */}
+                    <TableContainer component={Paper} sx={{ marginTop: 2 }}>
+                      <Table aria-label="schedule list">
+                        <TableHead>
+                          <TableRow>
+                            <TableCell>Data</TableCell>
+                            <TableCell>Condition</TableCell>
+                            <TableCell>Value</TableCell>
+                            <TableCell>Do</TableCell>
+                            <TableCell>Device</TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {automationList.map((automation, index) => (
+                            <TableRow key={index}>
+                              <TableCell>{automation.data}</TableCell>
+                              <TableCell>{automation.condition}</TableCell>
+                              <TableCell>{automation.value}</TableCell>
+                              <TableCell>
+                                {getAction(
+                                  automation.do,
+                                  automation.deviceValue
+                                )}
+                              </TableCell>
+                              <TableCell>{automation.device}</TableCell>
+                              <TableCell>
+                                <Button
+                                  variant="outlined"
+                                  color="error"
+                                  onClick={() => {
+                                    const updatedList = automationList.filter(
+                                      (_, i) => i !== index
+                                    );
+                                    setAutomationList(updatedList);
+                                    updateAutomation(updatedList);
+                                  }}
+                                >
+                                  <DeleteIcon />
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
                   </Paper>
                 </Box>
               </>
@@ -598,4 +765,28 @@ export default function Devices() {
       </Box>
     </>
   );
+}
+
+function daysArrayToString(daysArray) {
+  const days = ["M", "T", "W", "Th", "F", "S", "Su"];
+  return daysArray
+    .map((value, index) => (value ? days[index] : ""))
+    .filter(Boolean)
+    .join(", ");
+}
+function getTimeString(date) {
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+  return `${hours}:${minutes}`;
+}
+
+function getAction(action, value) {
+  // selectedAction
+  // value
+  const actionMap = {
+    turn_on: "Turn on",
+    turn_off: "Turn off",
+    set_value: `Set value to ${value}`,
+  };
+  return actionMap[action];
 }
