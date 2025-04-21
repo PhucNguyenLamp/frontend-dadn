@@ -112,7 +112,7 @@ export default function Devices() {
       if (firstLoadRef.current) {
         setScheduleList(schedule);
         setAutomationList(automation);
-
+        setAutomationDevice(res.data.devicename === "fan_device" ? "fan" : "led");
         setLoading(false);
       }
       firstLoadRef.current = false;
@@ -161,18 +161,24 @@ export default function Devices() {
     }
   }
 
-  const updateAutomation = async () => {
+  const addAutomation = async () => {
     try {
       const automation = {
         _id: device_map[type],
-        automation: {
-          data: automationData,
-          condition: automationCondition,
-          value: automationValue,
-          do: automationDo,
-          device: automationDevice,
-          deviceValue: automationDeviceValue,
-        },
+        automation: [...automationList, { data: automationData, condition: automationCondition, value: automationValue, do: automationDo, device: automationDevice, deviceValue: automationDeviceValue }],
+      };
+      setAutomationList((prev) => automation.automation)
+      const res = await axios.post(`http://localhost:5000/automation`, automation);
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  const updateAutomation = async (updatedList) => {
+    try {
+      const automation = {
+        _id: device_map[type],
+        automation: updatedList,
       };
       const res = await axios.post(
         `http://localhost:5000/automation`,
@@ -465,7 +471,7 @@ export default function Devices() {
                       </Button>
                     </Box>
                     {/* List of added schedules */}
-                    <TableContainer component={Paper}>
+                    <TableContainer component={Paper} sx={{ marginTop: 2 }}>
                       <Table aria-label="schedule list">
                         <TableHead>
                           <TableRow>
@@ -603,6 +609,7 @@ export default function Devices() {
                           label="Device"
                           sx={{ minWidth: 110 }}
                           value={automationDevice}
+                          disabled
                           onChange={(e) => setAutomationDevice(e.target.value)}
                         >
                           <MenuItem value={"fan"}>Fan</MenuItem>
@@ -634,7 +641,7 @@ export default function Devices() {
                               label="Value"
                               type="color"
                               sx={{ width: 120 }}
-                              value={automationDeviceValue || "#000000"}
+                              value={"#000000"}
                               onChange={(e) =>
                                 setAutomationDeviceValue(e.target.value)
                               }
@@ -645,11 +652,51 @@ export default function Devices() {
                       <Button
                         variant="contained"
                         color="primary"
-                        onClick={updateAutomation}
+                        onClick={addAutomation}
                       >
-                        Save
+                        ADD
                       </Button>
                     </Box>
+                    {/* List of added schedules */}
+                    <TableContainer component={Paper} sx={{ marginTop: 2 }}>
+                      <Table aria-label="schedule list">
+                        <TableHead>
+                          <TableRow>
+                            <TableCell>Data</TableCell>
+                            <TableCell>Condition</TableCell>
+                            <TableCell>Value</TableCell>
+                            <TableCell>Do</TableCell>
+                            <TableCell>Device</TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {automationList.map((automation, index) => (
+                            <TableRow key={index}>
+                              <TableCell>{automation.data}</TableCell>
+                              <TableCell>{automation.condition}</TableCell>
+                              <TableCell>{automation.value}</TableCell>
+                              <TableCell>{getAction(automation.do, automation.deviceValue)}</TableCell>
+                              <TableCell>{automation.device}</TableCell>
+                              <TableCell>
+                                <Button
+                                  variant="outlined"
+                                  color="error"
+                                  onClick={() => {
+                                    const updatedList = automationList.filter(
+                                      (_, i) => i !== index
+                                    );
+                                    setAutomationList(updatedList);
+                                    updateAutomation(updatedList);
+                                  }}
+                                >
+                                  <DeleteIcon />
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
                   </Paper>
                 </Box>
               </>
