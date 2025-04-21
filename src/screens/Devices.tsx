@@ -20,6 +20,7 @@ import {
   TableHead,
   TableCell,
   TableBody,
+  Snackbar,
 } from "@mui/material";
 import { useEffect, useState, useRef } from "react";
 import { useParams } from "react-router-dom";
@@ -75,11 +76,11 @@ export default function Devices() {
     false,
     false,
   ]);
-  const [selectedAction, setSelectedAction] = useState("");
+  const [selectedAction, setSelectedAction] = useState("turn_on");
   const [actionValue, setActionValue] = useState("");
 
   // automation
-  const [automationData, setAutomationData] = useState([]);
+  const [automationData, setAutomationData] = useState("");
   const [automationCondition, setAutomationCondition] = useState("");
   const [automationValue, setAutomationValue] = useState("");
   const [automationDo, setAutomationDo] = useState("");
@@ -94,14 +95,14 @@ export default function Devices() {
   // loading state
   const [loading, setLoading] = useState(true);
   const firstLoadRef = useRef(true);
-  
+
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+
   const getData = async (type) => {
     try {
       const res = await axios.get(`http://localhost:5000/${type}`);
       let { status, data, schedule, automation } = res.data;
       // temporary fix for schedule
-      
-      
 
       const device = data_init.find((item) => item.type === type);
       const update_device = { ...device, status, data, schedule, automation };
@@ -112,7 +113,12 @@ export default function Devices() {
       if (firstLoadRef.current) {
         setScheduleList(schedule);
         setAutomationList(automation);
-        setAutomationDevice(res.data.devicename === "fan_device" ? "fan" : "led");
+        setAutomationDevice(
+          res.data.devicename === "fan_device" ? "fan" : "led"
+        );
+        setAutomationDeviceValue(
+          res.data.devicename === "fan_device" ? 0 : "#000000"
+        );
         setLoading(false);
       }
       firstLoadRef.current = false;
@@ -140,9 +146,12 @@ export default function Devices() {
     try {
       const schedule = {
         _id: device_map[type],
-        schedule: [...scheduleList, { time, to, repeat, repeatOptions, selectedAction, actionValue }],
+        schedule: [
+          ...scheduleList,
+          { time, to, repeat, repeatOptions, selectedAction, actionValue },
+        ],
       };
-      setScheduleList((prev) => schedule.schedule)
+      setScheduleList((prev) => schedule.schedule);
       const res = await axios.post(`http://localhost:5000/schedule`, schedule);
     } catch (error) {
       console.log(error);
@@ -159,20 +168,33 @@ export default function Devices() {
     } catch (error) {
       console.log(error);
     }
-  }
+  };
 
   const addAutomation = async () => {
     try {
       const automation = {
         _id: device_map[type],
-        automation: [...automationList, { data: automationData, condition: automationCondition, value: automationValue, do: automationDo, device: automationDevice, deviceValue: automationDeviceValue }],
+        automation: [
+          ...automationList,
+          {
+            data: automationData,
+            condition: automationCondition,
+            value: automationValue,
+            do: automationDo,
+            device: automationDevice,
+            deviceValue: automationDeviceValue,
+          },
+        ],
       };
-      setAutomationList((prev) => automation.automation)
-      const res = await axios.post(`http://localhost:5000/automation`, automation);
+      setAutomationList((prev) => automation.automation);
+      const res = await axios.post(
+        `http://localhost:5000/automation`,
+        automation
+      );
     } catch (error) {
       console.log(error);
     }
-  }
+  };
 
   const updateAutomation = async (updatedList) => {
     try {
@@ -465,7 +487,10 @@ export default function Devices() {
                       <Button
                         variant="contained"
                         color="primary"
-                        onClick={addSchedule}
+                        onClick={() => {
+                          addSchedule();
+                          setSnackbarOpen(true);
+                        }}
                       >
                         ADD
                       </Button>
@@ -616,46 +641,73 @@ export default function Devices() {
                           <MenuItem value={"led"}>LED</MenuItem>
                         </Select>
                       </FormControl>
-                      {automationDo === "set_value" && (
+                        {automationDo === "set_value" && (
                         <>
                           {automationDevice === "fan" ? (
-                            <TextField
-                              label="Value"
-                              type="number"
-                              sx={{ width: 120 }}
-                              value={automationDeviceValue}
-                              onChange={(e) => {
-                                const val = Number(e.target.value);
-                                const clamped = Math.min(100, Math.max(0, val)); // Clamp between 0 and 100
-                                setAutomationDeviceValue(clamped);
-                              }}
-                              slotProps={{
-                                input: {
-                                  min: 0,
-                                  max: 100,
-                                },
-                              }}
-                            />
+                          <TextField
+                            label="Value"
+                            type="number"
+                            sx={{ width: 120 }}
+                            value={automationDeviceValue}
+                            onChange={(e) => {
+                            const val = Number(e.target.value);
+                            const clamped = Math.min(100, Math.max(0, val)); // Clamp between 0 and 100
+                            setAutomationDeviceValue(clamped);
+                            }}
+                            slotProps={{
+                            input: {
+                              min: 0,
+                              max: 100,
+                            },
+                            }}
+                          />
                           ) : (
-                            <TextField
-                              label="Value"
-                              type="color"
-                              sx={{ width: 120 }}
-                              value={"#000000"}
-                              onChange={(e) =>
-                                setAutomationDeviceValue(e.target.value)
-                              }
-                            />
+                          <TextField
+                            label="Value"
+                            type="color"
+                            sx={{ width: 120 }}
+                            value={automationDeviceValue}
+                            onChange={(e) =>
+                            setAutomationDeviceValue(e.target.value)
+                            }
+                          />
                           )}
                         </>
-                      )}
+                        )}
                       <Button
                         variant="contained"
                         color="primary"
-                        onClick={addAutomation}
+                        onClick={() => {
+                          if (
+                            !automationData ||
+                            !automationCondition ||
+                            automationValue === "" ||
+                            !automationDo ||
+                            !automationDevice
+                          ) {
+                            setSnackbarOpen(true);
+                            return;
+                          }
+                          addAutomation();
+                          setSnackbarOpen(true);
+                        }}
                       >
                         ADD
                       </Button>
+                      <Snackbar
+                        open={snackbarOpen}
+                        autoHideDuration={2000}
+                        onClose={() => setSnackbarOpen(false)}
+                        message={
+                          !automationData ||
+                          !automationCondition ||
+                          automationValue === "" ||
+                          !automationDo ||
+                          !automationDevice
+                            ? "Please fill all fields"
+                            : "Added!"
+                        }
+                      />
                     </Box>
                     {/* List of added schedules */}
                     <TableContainer component={Paper} sx={{ marginTop: 2 }}>
@@ -675,7 +727,12 @@ export default function Devices() {
                               <TableCell>{automation.data}</TableCell>
                               <TableCell>{automation.condition}</TableCell>
                               <TableCell>{automation.value}</TableCell>
-                              <TableCell>{getAction(automation.do, automation.deviceValue)}</TableCell>
+                              <TableCell>
+                                {getAction(
+                                  automation.do,
+                                  automation.deviceValue
+                                )}
+                              </TableCell>
                               <TableCell>{automation.device}</TableCell>
                               <TableCell>
                                 <Button
