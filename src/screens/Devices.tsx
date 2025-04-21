@@ -14,6 +14,12 @@ import {
   TextField,
   Skeleton,
   Slider,
+  TableContainer,
+  Table,
+  TableRow,
+  TableHead,
+  TableCell,
+  TableBody,
 } from "@mui/material";
 import { useEffect, useState, useRef } from "react";
 import { useParams } from "react-router-dom";
@@ -26,6 +32,7 @@ import { TimePicker } from "@mui/x-date-pickers/TimePicker";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
+import DeleteIcon from "@mui/icons-material/Delete";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -56,7 +63,8 @@ export default function Devices() {
   const { type } = useParams();
   const [data, setData] = useState({});
   // schedule
-  const [time, setTime] = useState();
+  const [time, setTime] = useState(new Date());
+  const [to, setTo] = useState(new Date(new Date().getTime() + 30 * 60000));
   const [repeat, setRepeat] = useState(false);
   const [repeatOptions, setRepeatOptions] = useState([
     false,
@@ -68,7 +76,7 @@ export default function Devices() {
     false,
   ]);
   const [selectedAction, setSelectedAction] = useState("");
-  const [actionValue, setActionValue] = useState(null);
+  const [actionValue, setActionValue] = useState("");
 
   // automation
   const [automationData, setAutomationData] = useState([]);
@@ -76,47 +84,34 @@ export default function Devices() {
   const [automationValue, setAutomationValue] = useState("");
   const [automationDo, setAutomationDo] = useState("");
   const [automationDevice, setAutomationDevice] = useState("");
-  const [automationDeviceValue, setAutomationDeviceValue] = useState(null);
+  const [automationDeviceValue, setAutomationDeviceValue] = useState("");
+
+  const [scheduleList, setScheduleList] = useState([]);
+  const [automationList, setAutomationList] = useState([]);
 
   // update helper
   const [update, setUpdate] = useState(false);
   // loading state
   const [loading, setLoading] = useState(true);
   const firstLoadRef = useRef(true);
-
+  
   const getData = async (type) => {
     try {
       const res = await axios.get(`http://localhost:5000/${type}`);
-      const { status, data, schedule, automation } = res.data;
+      let { status, data, schedule, automation } = res.data;
+      // temporary fix for schedule
+      
+      
+
       const device = data_init.find((item) => item.type === type);
       const update_device = { ...device, status, data, schedule, automation };
 
-      console.log(res.data)
+      console.log(res.data);
 
       setData(update_device);
       if (firstLoadRef.current) {
-        setTime(update_device.schedule.time);
-        setRepeat(update_device.schedule.repeat || false);
-        setRepeatOptions(
-          update_device.schedule.repeatOptions || [
-            false,
-            false,
-            false,
-            false,
-            false,
-            false,
-            false,
-          ]
-        );
-        setSelectedAction(update_device.schedule.selectedAction || "");
-        setActionValue(update_device.schedule.actionValue || null);
-
-        setAutomationData(update_device.automation.data);
-        setAutomationCondition(update_device.automation.condition);
-        setAutomationValue(update_device.automation.value);
-        setAutomationDo(update_device.automation.do);
-        setAutomationDevice(update_device.automation.device);
-        setAutomationDeviceValue(update_device.automation.deviceValue);
+        setScheduleList(schedule);
+        setAutomationList(automation);
 
         setLoading(false);
       }
@@ -141,25 +136,30 @@ export default function Devices() {
     }
   };
 
-  const updateSchedule = async () => {
+  const addSchedule = async () => {
     try {
       const schedule = {
         _id: device_map[type],
-        schedule: {
-          time,
-          repeat,
-          repeatOptions,
-          selectedAction,
-          actionValue,
-        },
+        schedule: [...scheduleList, { time, to, repeat, repeatOptions, selectedAction, actionValue }],
       };
-      console.log(schedule);
+      setScheduleList((prev) => schedule.schedule)
       const res = await axios.post(`http://localhost:5000/schedule`, schedule);
-      console.log(res.data);
     } catch (error) {
       console.log(error);
     }
   };
+
+  const updateSchedule = async (updatedList) => {
+    try {
+      const schedule = {
+        _id: device_map[type],
+        schedule: updatedList,
+      };
+      const res = await axios.post(`http://localhost:5000/schedule`, schedule);
+    } catch (error) {
+      console.log(error);
+    }
+  }
 
   const updateAutomation = async () => {
     try {
@@ -347,6 +347,7 @@ export default function Devices() {
             </Box>
             {type === "light_device" || type === "fan_device" ? (
               <>
+                {/* TODO: FIX SCHEDULE RANGE */}
                 <Box sx={{ display: "flex", flexDirection: "column" }}>
                   <Typography variant="h3">Schedule</Typography>
                   <Paper
@@ -365,12 +366,20 @@ export default function Devices() {
                       <Typography variant="h6">Time: </Typography>
                       <LocalizationProvider dateAdapter={AdapterDayjs}>
                         <TimePicker
-                          label="At"
+                          label="From"
                           value={dayjs(time)}
                           onChange={(newValue) => {
                             setTime(newValue.toDate());
-                            // console.log(newValue.toDate());
-                            // console.log(Date())
+                          }}
+                        />
+                      </LocalizationProvider>
+                      <Typography variant="h6"> - </Typography>
+                      <LocalizationProvider dateAdapter={AdapterDayjs}>
+                        <TimePicker
+                          label="To"
+                          value={dayjs(to)}
+                          onChange={(newValue) => {
+                            setTo(newValue.toDate());
                           }}
                         />
                       </LocalizationProvider>
@@ -450,11 +459,62 @@ export default function Devices() {
                       <Button
                         variant="contained"
                         color="primary"
-                        onClick={updateSchedule}
+                        onClick={addSchedule}
                       >
-                        Save
+                        ADD
                       </Button>
                     </Box>
+                    {/* List of added schedules */}
+                    <TableContainer component={Paper}>
+                      <Table aria-label="schedule list">
+                        <TableHead>
+                          <TableRow>
+                            <TableCell>Time</TableCell>
+                            <TableCell>Repeat</TableCell>
+                            <TableCell>Days</TableCell>
+                            <TableCell>Action</TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {scheduleList.map((schedule, index) => (
+                            <TableRow key={index}>
+                              <TableCell>
+                                {`${getTimeString(
+                                  new Date(schedule.time)
+                                )} - ${getTimeString(new Date(schedule.to))}`}
+                              </TableCell>
+                              <TableCell>
+                                {schedule.repeat ? "Yes" : "No"}
+                              </TableCell>
+                              <TableCell>
+                                {daysArrayToString(schedule.repeatOptions)}
+                              </TableCell>
+                              <TableCell>
+                                {getAction(
+                                  schedule.selectedAction,
+                                  schedule.actionValue
+                                )}
+                              </TableCell>
+                              <TableCell>
+                                <Button
+                                  variant="outlined"
+                                  color="error"
+                                  onClick={() => {
+                                    const updatedList = scheduleList.filter(
+                                      (_, i) => i !== index
+                                    );
+                                    setScheduleList(updatedList);
+                                    updateSchedule(updatedList);
+                                  }}
+                                >
+                                  <DeleteIcon />
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
                   </Paper>
                 </Box>
 
@@ -601,4 +661,28 @@ export default function Devices() {
       </Box>
     </>
   );
+}
+
+function daysArrayToString(daysArray) {
+  const days = ["M", "T", "W", "Th", "F", "S", "Su"];
+  return daysArray
+    .map((value, index) => (value ? days[index] : ""))
+    .filter(Boolean)
+    .join(", ");
+}
+function getTimeString(date) {
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+  return `${hours}:${minutes}`;
+}
+
+function getAction(action, value) {
+  // selectedAction
+  // value
+  const actionMap = {
+    turn_on: "Turn on",
+    turn_off: "Turn off",
+    set_value: `Set value to ${value}`,
+  };
+  return actionMap[action];
 }
