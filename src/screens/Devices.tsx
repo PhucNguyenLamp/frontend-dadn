@@ -97,7 +97,7 @@ export default function Devices() {
   const firstLoadRef = useRef(true);
 
   const [snackbarOpen, setSnackbarOpen] = useState(false);
-
+  // const [snackbarScheduleOpen, setSnackbarScheduleOpen] = useState(false);
   const getData = async (type) => {
     try {
       const res = await axios.get(`http://localhost:5000/${type}`);
@@ -157,7 +157,19 @@ export default function Devices() {
       console.log(error);
     }
   };
+  const isOverlapping = (sche) =>
+    sche.some((schedule) => {
+      const newStart = new Date(time).getTime();
+      const newEnd = new Date(to).getTime();
+      const existingStart = new Date(schedule.time).getTime();
+      const existingEnd = new Date(schedule.to).getTime();
 
+      return (
+        (newStart >= existingStart && newStart < existingEnd) || // New start is within an existing schedule
+        (newEnd > existingStart && newEnd <= existingEnd) || // New end is within an existing schedule
+        (newStart <= existingStart && newEnd >= existingEnd) // New schedule completely overlaps an existing schedule
+      );
+    });
   const updateSchedule = async (updatedList) => {
     try {
       const schedule = {
@@ -488,8 +500,12 @@ export default function Devices() {
                         variant="contained"
                         color="primary"
                         onClick={() => {
+                          if (isOverlapping(scheduleList)) {
+                            // setSnackbarScheduleOpen(true);
+                            return; // Reject the addition
+                          }
                           addSchedule();
-                          setSnackbarOpen(true);
+                          // setSnackbarScheduleOpen(true);
                         }}
                       >
                         ADD
@@ -641,42 +657,43 @@ export default function Devices() {
                           <MenuItem value={"led"}>LED</MenuItem>
                         </Select>
                       </FormControl>
-                        {automationDo === "set_value" && (
+                      {automationDo === "set_value" && (
                         <>
                           {automationDevice === "fan" ? (
-                          <TextField
-                            label="Value"
-                            type="number"
-                            sx={{ width: 120 }}
-                            value={automationDeviceValue}
-                            onChange={(e) => {
-                            const val = Number(e.target.value);
-                            const clamped = Math.min(100, Math.max(0, val)); // Clamp between 0 and 100
-                            setAutomationDeviceValue(clamped);
-                            }}
-                            slotProps={{
-                            input: {
-                              min: 0,
-                              max: 100,
-                            },
-                            }}
-                          />
+                            <TextField
+                              label="Value"
+                              type="number"
+                              sx={{ width: 120 }}
+                              value={automationDeviceValue}
+                              onChange={(e) => {
+                                const val = Number(e.target.value);
+                                const clamped = Math.min(100, Math.max(0, val)); // Clamp between 0 and 100
+                                setAutomationDeviceValue(clamped);
+                              }}
+                              slotProps={{
+                                input: {
+                                  min: 0,
+                                  max: 100,
+                                },
+                              }}
+                            />
                           ) : (
-                          <TextField
-                            label="Value"
-                            type="color"
-                            sx={{ width: 120 }}
-                            value={automationDeviceValue}
-                            onChange={(e) =>
-                            setAutomationDeviceValue(e.target.value)
-                            }
-                          />
+                            <TextField
+                              label="Value"
+                              type="color"
+                              sx={{ width: 120 }}
+                              value={automationDeviceValue}
+                              onChange={(e) =>
+                                setAutomationDeviceValue(e.target.value)
+                              }
+                            />
                           )}
                         </>
-                        )}
+                      )}
                       <Button
                         variant="contained"
                         color="primary"
+                        disabled={automationList.length >= 1}
                         onClick={() => {
                           if (
                             !automationData ||
@@ -690,6 +707,7 @@ export default function Devices() {
                           }
                           addAutomation();
                           setSnackbarOpen(true);
+                          // disable button when automation count is 1
                         }}
                       >
                         ADD
@@ -708,6 +726,14 @@ export default function Devices() {
                             : "Added!"
                         }
                       />
+                      {/* <Snackbar
+                        open={snackbarScheduleOpen}
+                        autoHideDuration={2000}
+                        onClose={() => setSnackbarOpen(false)}
+                        message={
+                          isOverlapping(scheduleList) ? "Overlapped" : "Added!"
+                        }
+                      /> */}
                     </Box>
                     {/* List of added schedules */}
                     <TableContainer component={Paper} sx={{ marginTop: 2 }}>
